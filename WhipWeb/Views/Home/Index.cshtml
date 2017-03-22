@@ -1,0 +1,48 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="jumbotron">
+    <img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <h3>Current Projects:</h3>
+        <div class="list-group">
+            <a class="list-group-item" asp-area="" asp-controller="Projects" asp-action="Voters">
+                <h4>Voter Registration</h4>
+                <p>
+                    Access the Secretary of State's Voter Registration Database (VRDB) to generate voter lists by legislative district and precinct.  These are tab-delimited text files that can be used for batch operations in other utilities, such as my Facebook VoterID Helper.
+                </p>
+            </a>
+            <a class="list-group-item" asp-area="" asp-controller="Projects" asp-action="Donors">
+                <h4>Campaign Contributions</h4>
+                <p>
+                    Access the Public Disclosure Commission (PDC) database to generate donor lists for your legislative district, filtered by party.  Note that this data needs some major record linkage work to clean up all the duplicate entries, but we're working on that.
+                </p>
+            </a>
+            <a class="list-group-item" asp-area="" asp-controller="Projects" asp-action="Results">
+                <h4>Election Results</h4>
+                <p>
+                    Access past precinct-level election results to determine which areas of your legislative district have the highest level of support and voter turnout.  This can be used to direct canvassing and GoTV efforts.
+                </p>
+            </a>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <section>
+            <h3>Related Links</h3>
+            <p>
+                More information is available at the sites below:
+            </p>
+            <ul>
+                <li><a href="http://www.sos.wa.gov/elections/vrdb/">Voter Registration Database</a></li>
+                <li><a href="http://pdc.wa.gov/">Public Disclosure Commission</a></li>
+                <li><a href="http://kingcounty.gov/depts/elections.aspx">King County Elections</a></li>
+                <li><a href="http://app.leg.wa.gov/DistrictFinder/">District Finder</a></li>
+                <li><a href="https://www.sos.wa.gov/elections/redistricting/maps.aspx">District Maps</a></li>
+            </ul>
+        </section>
+    </div>
+</div>
