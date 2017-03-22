@@ -9,11 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using WhipWeb.Models;
-using WhipWeb.Models.AccountViewModels;
-using WhipWeb.Services;
+using WhipStat.Models;
+using WhipStat.Models.AccountViewModels;
+using WhipStat.Services;
 
-namespace WhipWeb.Controllers
+namespace WhipStat.Controllers
 {
     [Authorize]
     public class AccountController : Controller

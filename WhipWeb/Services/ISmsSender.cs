@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WhipWeb.Services
+namespace WhipStat.Services
 {
     public interface ISmsSender
     {

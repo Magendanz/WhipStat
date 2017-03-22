@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace WhipWeb.Models.AccountViewModels
+namespace WhipStat.Models.AccountViewModels
 {
     public class SendCodeViewModel
     {

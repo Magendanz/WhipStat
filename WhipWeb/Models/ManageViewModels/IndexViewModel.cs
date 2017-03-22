@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 
-namespace WhipWeb.Models.ManageViewModels
+namespace WhipStat.Models.ManageViewModels
 {
     public class IndexViewModel
     {

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using WhipWeb.Models;
+using WhipStat.Models;
 
-namespace WhipWeb.Data
+namespace WhipStat.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {

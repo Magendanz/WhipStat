@@ -5,15 +5,16 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WhipWeb.Data;
-using WhipWeb.Models;
-using WhipWeb.Services;
+using WhipStat.Data;
+using WhipStat.Models;
+using WhipStat.Services;
 
-namespace WhipWeb
+namespace WhipStat
 {
     public class Startup
     {
@@ -43,10 +44,15 @@ namespace WhipWeb
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddDbContext<VoterDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("VRDBConnection")));
+
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
+            services.AddMemoryCache();
+            services.AddSession();
             services.AddMvc();
 
             // Add application services.
@@ -72,8 +78,8 @@ namespace WhipWeb
             }
 
             app.UseStaticFiles();
-
             app.UseIdentity();
+            app.UseSession();
 
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
 

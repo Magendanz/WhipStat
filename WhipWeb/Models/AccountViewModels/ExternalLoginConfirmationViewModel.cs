@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WhipWeb.Models.AccountViewModels
+namespace WhipStat.Models.AccountViewModels
 {
     public class ExternalLoginConfirmationViewModel
     {

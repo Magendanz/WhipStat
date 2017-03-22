@@ -7,11 +7,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using WhipWeb.Models;
-using WhipWeb.Models.ManageViewModels;
-using WhipWeb.Services;
+using WhipStat.Models;
+using WhipStat.Models.ManageViewModels;
+using WhipStat.Services;
 
-namespace WhipWeb.Controllers
+namespace WhipStat.Controllers
 {
     [Authorize]
     public class ManageController : Controller
