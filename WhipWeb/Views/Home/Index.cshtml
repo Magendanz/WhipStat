@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
 <div class="jumbotron">
@@ -10,6 +10,12 @@
     <div class="col-md-9">
         <h3>Current Projects:</h3>
         <div class="list-group">
+            <a class="list-group-item" asp-area="" asp-controller="Projects" asp-action="Records">
+                <h4>Voting Records</h4>
+                <p>
+                    Review how your legislators are voting on the House and Senate floor, including how often they cross party lines or miss votes.  This is our newest project and will see considerable churn over the next few weeks.
+                </p>
+            </a>
             <a class="list-group-item" asp-area="" asp-controller="Projects" asp-action="Voters">
                 <h4>Voter Registration</h4>
                 <p>

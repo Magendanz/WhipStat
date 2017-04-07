@@ -28,7 +28,7 @@ namespace WhipStat.Models.LegTech
 
         public override int GetHashCode()
         {
-            return (Year << 16) ^ BillNumber;
+            return (Year << 16) ^  BillNumber;
         }
     }
 }

@@ -1,9 +1,12 @@
 ﻿@inject Microsoft.ApplicationInsights.AspNetCore.JavaScriptSnippet JavaScriptSnippet
 <!DOCTYPE html>
 <html>
-<head>
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta property="og:description" content="When connecting political and non-profit organizations to the tech community, we'll sometimes need to throw a proof-of-concept together quickly just to illustrate a point.  That's the purpose of this WhipStat site." />
+    <meta property="og:image" content="http://www.whipstat.com/images/logo.jpg" />
+
     <title>@ViewData["Title"] - WhipStat</title>
 
     <environment names="Development">
@@ -38,6 +41,7 @@
                     <li class="dropdown">
                         <a class="dropdown-toggle" role="button" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown">Projects <span class="caret"></span></a>
                         <ul class="dropdown-menu">
+                            <li><a asp-area="" asp-controller="Projects" asp-action="Records">Voting Records</a></li>
                             <li><a asp-area="" asp-controller="Projects" asp-action="Voters">Voter Registration</a></li>
                             <li><a asp-area="" asp-controller="Projects" asp-action="Donors">Campaign Contributions</a></li>
                             <li><a asp-area="" asp-controller="Projects" asp-action="Results">Election Results</a></li>

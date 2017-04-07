@@ -9,12 +9,10 @@ namespace DataProcessor
         {
             Console.WriteLine("Starting data processing...");
 
-            using (var db = new LegTechDbContext())
+            using (var db = new RecordDbContext())
             {
-                //db.PopulateSubtables();
-                //db.IdentifyMembers();
                 //db.FixupMembers();
-                //db.FixupVotes();
+                //db.MatchPolicyAreas();
                 //db.ScoreBills();
                 db.ScoreMembers();
             }

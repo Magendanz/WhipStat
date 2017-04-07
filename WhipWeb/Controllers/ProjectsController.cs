@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WhipStat.Data;
+using WhipStat.Models.LegTech;
 using WhipStat.Models.ProjectViewModels;
 
 namespace WhipStat.Controllers
@@ -18,10 +19,12 @@ namespace WhipStat.Controllers
         VoterDbContext VoterDb = new VoterDbContext();
         DonorDbContext DonorDb = new DonorDbContext();
         ResultDbContext ResultDb = new ResultDbContext();
+        RecordDbContext RecordDb = new RecordDbContext();
 
         SelectListItem SelectPrompt = new SelectListItem { Value = "0", Text = "Select...", Selected = true, Disabled = true };
+        String TooltipHtml = System.IO.File.ReadAllText(@"Views\Projects\Tooltip.html");
 
-    public IActionResult Index()
+        public IActionResult Index()
         {
             return View();
         }
@@ -125,7 +128,7 @@ namespace WhipStat.Controllers
 
         private string GetZipCodes(int distict)
         {
-            return VoterDb.ZipCodes.Where(z => z.LegislativeDistrict == distict).Select(z => z.ZipCodes).First();
+            return VoterDb.ZipCodes.First(z => z.LegislativeDistrict == distict).ZipCodes;
         }
 
         public IActionResult Results()
@@ -134,7 +137,6 @@ namespace WhipStat.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Results(ResultsViewModel model)
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
@@ -199,6 +201,120 @@ namespace WhipStat.Controllers
                 list.Add(new SelectListItem { Value = i, Text = i });
 
             return list;
+        }
+
+        public IActionResult Records()
+        {
+            return View(new RecordsViewModel() { Areas = GetPolicyAreaList(), OddYears = GetYearList(2003), EvenYears = GetYearList(2004),
+                Chambers = GetChamberList(), To = "2016" });
+        }
+
+        private List<SelectListItem> GetPolicyAreaList()
+        {
+            var list = new List<SelectListItem> { new SelectListItem { Value = "0", Text = "All Policy Areas", Selected = true } };
+
+            foreach (var area in RecordDb.PolicyAreas)
+                list.Add(new SelectListItem { Value = area.Id.ToString(), Text = area.Name });
+
+            return list;
+        }
+
+        private List<SelectListItem> GetYearList(short start)
+        {
+            var list = new List<SelectListItem>();
+
+            for (short year = start; year < 2017; year += 2)
+                list.Add(new SelectListItem { Value = year.ToString(), Text = year.ToString() });
+
+            return list;
+        }
+
+        private List<SelectListItem> GetChamberList()
+        {
+            return new List<SelectListItem> {
+                new SelectListItem { Value = "0", Text = "Both Chambers", Selected = true },
+                new SelectListItem { Value = "House", Text = "House of Representatives" },
+                new SelectListItem { Value = "Senate", Text = "Senate" },
+
+            };
+        }
+
+        [HttpGet]
+        public DataTable GetDataTable(string chamber, int area, int from, int to)
+        {
+            var points = new List<Point>();
+            var members = RecordDb.Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.Party).ToList();
+
+            foreach (var member in members)
+            {
+                var scores = RecordDb.Scores.Where(i => i.Member_Id == member.Id && i.PolicyArea == area && i.Year >= from && i.Year <= to).ToList();
+                var total = scores.Sum(i => i.Total);
+                var count = scores.Sum(i => i.Count);
+                if (count > 10)
+                {
+                    var score = total / count;
+                    points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, score), Series = member.Party });
+                }
+            }
+
+            return ConvertPoints(points);
+        }
+
+        private double Stack(double x, List<Point> points)
+        {
+            const double dx = 1.0;
+            const double dy = 1.0;
+            double y = 0;
+
+            while (points.Exists(p => Math.Abs(p.x - x) < dx && Math.Abs(p.y - y) < dy))
+                y += dy;
+
+            return y;
+        }
+
+        private string GetTooltip(Member member, double score)
+        {
+            return String.Format(TooltipHtml, member.Name, member.LastName, member.Agency, member.District, member.Party, score);
+        }
+
+        private DataTable ConvertPoints(List<Point> points)
+        {
+            var dt = new DataTable
+            {
+                cols = new List<ColInfo> { new ColInfo { label = "% bias", type = "number" } },
+                rows = new List<DataPointSet>(),
+                p = new Dictionary<string, string>()
+            };
+
+            var series = points.GroupBy(p => p.Series).Select(p => p.First().Series).ToList();
+            var n = series.Count() * 2 + 1;
+            foreach (var s in series)
+            {
+                dt.cols.Add(new ColInfo { label = s, type = "number", p = new Dictionary<string, string> { { "median", GetMedian(points, s).ToString() } } });
+                dt.cols.Add(new ColInfo { role = "tooltip", type = "string", p = new Dictionary<string, string> { { "html", "true" } } });
+            }
+
+            foreach (var point in points)
+            {
+                var dps = new DataPointSet { c = new DataPoint[n] };
+                var i = series.FindIndex(p => p == point.Series);
+                dps.c[0] = new DataPoint { v = point.x.ToString() };
+                dps.c[i * 2 + 1] = new DataPoint { v = point.y.ToString() };
+                dps.c[i * 2 + 2] = new DataPoint { v = point.Label };
+                dt.rows.Add(dps);
+            }
+
+            return dt;
+        }
+
+        private double GetMedian(List<Point> points, string series)
+        {
+            var list = points.Where(i => i.Series == series).OrderBy(i => i.x).Select(i => i.x);
+            int index = list.Count() / 2;
+            if (list.Count() % 2 == 0)
+                return (list.ElementAt(index) + list.ElementAt(index - 1)) / 2;
+            else
+                return list.ElementAt(index);
         }
 
         public IActionResult Download()

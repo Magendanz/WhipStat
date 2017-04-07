@@ -66,7 +66,11 @@ namespace WhipStat
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            if (env.IsDevelopment())
+            app.UseDeveloperExceptionPage();
+            app.UseDatabaseErrorPage();
+            app.UseBrowserLink();
+
+ /*           if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseDatabaseErrorPage();
@@ -75,7 +79,7 @@ namespace WhipStat
             else
             {
                 app.UseExceptionHandler("/Home/Error");
-            }
+            } */
 
             app.UseStaticFiles();
             app.UseIdentity();
