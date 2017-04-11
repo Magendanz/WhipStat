@@ -73,27 +73,24 @@ namespace WhipStat.Data
             var members = Members.ToList();
             var sponsors = GetSponsors();
 
-            using (var db = new DonorDbContext())
+            foreach (var member in members)
             {
-                foreach (var member in members)
+                var match = sponsors.FirstOrDefault(i => i.Equals(member));
+                if (match != null)
                 {
-                    var match = sponsors.FirstOrDefault(i => i.Equals(member));
-                    if (match != null)
-                    {
-                        member.Id = match.Id;
-                        member.Name = match.Name;
-                        member.LongName = match.LongName;
-                        member.Agency = match.Agency;
-                        member.Acronym = match.Acronym;
-                        member.District = match.District;
-                        member.Party = match.Party;
-                        member.Phone = match.Phone;
-                        member.Email = match.Email;
-                    }
-
-                    Console.WriteLine($"Updating {member}...");
-                    Members.Update(member);
+                    member.Id = match.Id;
+                    member.Name = match.Name;
+                    member.LongName = match.LongName;
+                    member.Agency = match.Agency;
+                    member.Acronym = match.Acronym;
+                    member.District = match.District;
+                    member.Party = match.Party;
+                    member.Phone = match.Phone;
+                    member.Email = match.Email;
                 }
+
+                Console.WriteLine($"Updating {member}...");
+                Members.Update(member);
             }
 
             // Attempt to save changes to the database
@@ -231,6 +228,8 @@ namespace WhipStat.Data
 
         public void ScoreMembers()
         {
+            Console.WriteLine("Clearing old scores...");
+            Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.Scores");
             Console.WriteLine("Preloading voting records...");
             var members = Members.OrderBy(i => i.LastName).ToList();
             var bills = Bills.ToList();

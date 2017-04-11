@@ -209,6 +209,21 @@ namespace WhipStat.Controllers
                 Chambers = GetChamberList(), To = "2016" });
         }
 
+        [HttpPost]
+        public IActionResult Records(RecordsViewModel model)
+        {
+            // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
+            // Do the time consuming work now, while loading indicator is displayed
+            var area = model.Area == "0" ? "All Policy Areas" : RecordDb.PolicyAreas.Single(i => i.Id == Convert.ToInt32(model.Area)).Name;
+            var chamber = model.Chamber == "0" ? "Both Chambers" : model.Chamber;
+            TempData["FileName"] = $"Partisan Leaderboard - {area}, {chamber} ({model.From}-{model.To}).txt";
+            TempData["ContentType"] = "text/tab-separated-values";
+            TempData["Bytes"] = Encoding.UTF8.GetBytes(RecordDb.GetLeaderboard(model.Chamber, Convert.ToInt16(model.Area), Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
+
+            // Serve up the download page and deliver file
+            return View("Download");
+        }
+
         private List<SelectListItem> GetPolicyAreaList()
         {
             var list = new List<SelectListItem> { new SelectListItem { Value = "0", Text = "All Policy Areas", Selected = true } };
@@ -240,7 +255,7 @@ namespace WhipStat.Controllers
         }
 
         [HttpGet]
-        public DataTable GetDataTable(string chamber, int area, int from, int to)
+        public DataTable GetDataTable(string chamber, short area, short from, short to)
         {
             var points = new List<Point>();
             var members = RecordDb.Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.Party).ToList();

@@ -33,6 +33,22 @@ namespace WhipStat.Data
             modelBuilder.Entity<Bill>().HasKey(t => new { t.BillNumber, t.Year });
             modelBuilder.Entity<Score>().HasKey(t => new { t.Member_Id, t.Year, t.PolicyArea });
         }
+        public string GetLeaderboard(string chamber, short area, short from, short to)
+        {
+            var sb = new StringBuilder();
+            var members = Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.LastName).ToList();
 
+            sb.AppendLine("Last Name\tFirst Name\tDistrict\tParty\tScore");
+            foreach (var member in members)
+            {
+                var scores = Scores.Where(i => i.Member_Id == member.Id && i.PolicyArea == area && i.Year >= from && i.Year <= to).ToList();
+                var total = scores.Sum(i => i.Total);
+                var count = scores.Sum(i => i.Count);
+                if (count > 10)
+                    sb.AppendLine($"{member.LastName}\t{member.FirstName}\t{member.District}\t{member.Party}\t{total / count:N1}");
+            }
+
+            return sb.ToString();
+        }
     }
 }
