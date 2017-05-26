@@ -11,11 +11,20 @@ namespace DataProcessor
 
             using (var db = new RecordDbContext())
             {
+                //db.ProcessNewVotes();
+                //db.UpdateMembers();
                 //db.FixupMembers();
-                //db.MatchPolicyAreas();
+                db.IdentifyPhotos();
+                //db.UpdateBillInfo();
+                //db.UpdateCommittees();
+                //db.UpdatePolicyAreas();
                 //db.ScoreBills();
-                db.ScoreMembers();
+                //db.ScoreMembers();
             }
+
+            Console.WriteLine();
+            Console.Write("Press any key to continue...");
+            Console.ReadKey();
         }
     }
 }

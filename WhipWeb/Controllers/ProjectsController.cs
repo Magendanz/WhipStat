@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,12 @@ namespace WhipStat.Controllers
 
         SelectListItem SelectPrompt = new SelectListItem { Value = "0", Text = "Select...", Selected = true, Disabled = true };
         String TooltipHtml = System.IO.File.ReadAllText(@"Views\Projects\Tooltip.html");
+
+        private readonly IHostingEnvironment _hostingEnvironment;
+        public ProjectsController(IHostingEnvironment hostingEnvironment)
+        {
+            _hostingEnvironment = hostingEnvironment;
+        }
 
         public IActionResult Index()
         {
@@ -206,7 +213,7 @@ namespace WhipStat.Controllers
         public IActionResult Records()
         {
             return View(new RecordsViewModel() { Areas = GetPolicyAreaList(), OddYears = GetYearList(2003), EvenYears = GetYearList(2004),
-                Chambers = GetChamberList(), To = "2016" });
+                Chambers = GetChamberList(), To = "2018" });
         }
 
         [HttpPost]
@@ -238,7 +245,7 @@ namespace WhipStat.Controllers
         {
             var list = new List<SelectListItem>();
 
-            for (short year = start; year < 2017; year += 2)
+            for (short year = start; year < 2019; year += 2)
                 list.Add(new SelectListItem { Value = year.ToString(), Text = year.ToString() });
 
             return list;
@@ -289,7 +296,7 @@ namespace WhipStat.Controllers
 
         private string GetTooltip(Member member, double score)
         {
-            return String.Format(TooltipHtml, member.Name, member.LastName, member.Agency, member.District, member.Party, score);
+            return String.Format(TooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
         }
 
         private DataTable ConvertPoints(List<Point> points)
@@ -320,6 +327,16 @@ namespace WhipStat.Controllers
             }
 
             return dt;
+        }
+
+        [HttpGet]
+        public ActionResult Portrait(int id)
+        {
+            var path = Path.Combine(_hostingEnvironment.WebRootPath, "thumbnails", id + ".jpg");
+            if (!System.IO.File.Exists(path))
+                path = Path.Combine(_hostingEnvironment.WebRootPath, "thumbnails", "placeholder.jpg");
+
+            return base.PhysicalFile(path, "image/jpeg");
         }
 
         private double GetMedian(List<Point> points, string series)
