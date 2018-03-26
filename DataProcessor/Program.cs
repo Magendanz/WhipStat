@@ -14,12 +14,17 @@ namespace DataProcessor
                 //db.ProcessNewVotes();
                 //db.UpdateMembers();
                 //db.FixupMembers();
-                db.IdentifyPhotos();
-                //db.UpdateBillInfo();
+                //db.IdentifyPhotos();
                 //db.UpdateCommittees();
                 //db.UpdatePolicyAreas();
+                //db.UpdateBillInfo();
                 //db.ScoreBills();
                 //db.ScoreMembers();
+            }
+
+            using (var db = new DonorDbContext())
+            {
+                //db.GenerateAggregrates();
             }
 
             Console.WriteLine();

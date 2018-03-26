@@ -13,10 +13,17 @@ namespace WhipStat.Data
         public DbSet<Campaign> Campaigns { get; set; }
         public DbSet<Office> Offices { get; set; }
         public DbSet<Party> Parties { get; set; }
+        public DbSet<Donor> Donors { get; set; }
+        public DbSet<Tally> Totals { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(@"Server=192.168.2.2;Database=PDC;Trusted_Connection=True;");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Tally>().HasKey(t => new { t.Donor, t.Year, t.Jurisdiction });
         }
 
         public string GetDonors(string party, string zips)
@@ -32,6 +39,21 @@ namespace WhipStat.Data
                 sb.AppendLine(String.Format("{0}\t{1}\t{2}\t{3}\t{4:MM/dd/yyyy}\t{5:C}", item.Name, item.Address, item.City, item.Zip, item.Rcpt_Date, item.Amount));
 
             return sb.ToString();
+        }
+
+        public void GenerateAggregrates()
+        {
+            Console.WriteLine("Loading donor list...");
+            foreach (var donor in Donors.ToList())
+            {
+                Console.WriteLine($"  Analyzing '{donor.Name}'...");
+                var contributions = Totals.Where(i => i.Donor == donor.ID).ToList();
+                donor.Aggregate = contributions.Sum(i => i.Total);
+            }
+
+            // Attempt to save changes to the database
+            Console.WriteLine("Saving final changes...");
+            SaveChanges();
         }
     }
 }

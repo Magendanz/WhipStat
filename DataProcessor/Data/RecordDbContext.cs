@@ -37,12 +37,17 @@ namespace WhipStat.Data
 
         public void ProcessNewVotes()
         {
+            // Uncomment the following lines only if rebuilding from scratch
+            //Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.Votes");
+            //Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.RollCalls");
+
             Console.WriteLine("Retrieving member list...");
             var members = Members.ToList();
             var sponsors = GetSponsors("2017-18");
             Console.WriteLine("Retrieving bills...");
             var bills = Bills.ToList();
             var areas = PolicyAreas.ToList();
+            Console.WriteLine("Clearing old scores...");
             Console.WriteLine("Retrieving roll call votes...");
             var rolls = RollCalls.ToList();
 

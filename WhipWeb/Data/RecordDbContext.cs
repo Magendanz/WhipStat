@@ -5,9 +5,9 @@ using System.Net.Http;
 using System.Text;
 using System.Runtime.Serialization;
 using Microsoft.EntityFrameworkCore;
+
 using WhipStat.Models.LegTech;
 using WhipStat.Models.PDC;
-using System.Text.RegularExpressions;
 
 namespace WhipStat.Data
 {
@@ -33,7 +33,8 @@ namespace WhipStat.Data
             modelBuilder.Entity<Bill>().HasKey(t => new { t.BillNumber, t.Year });
             modelBuilder.Entity<Score>().HasKey(t => new { t.Member_Id, t.Year, t.PolicyArea });
         }
-        public string GetLeaderboard(string chamber, short area, short from, short to)
+
+        public string GetLeaderboard(string chamber, short area, short begin, short end)
         {
             var sb = new StringBuilder();
             var members = Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.LastName).ToList();
@@ -41,7 +42,7 @@ namespace WhipStat.Data
             sb.AppendLine("Last Name\tFirst Name\tDistrict\tParty\tScore");
             foreach (var member in members)
             {
-                var scores = Scores.Where(i => i.Member_Id == member.Id && i.PolicyArea == area && i.Year >= from && i.Year <= to).ToList();
+                var scores = Scores.Where(i => i.Member_Id == member.Id && i.PolicyArea == area && i.Year >= begin && i.Year <= end).ToList();
                 var total = scores.Sum(i => i.Total);
                 var count = scores.Sum(i => i.Count);
                 if (count > 10)

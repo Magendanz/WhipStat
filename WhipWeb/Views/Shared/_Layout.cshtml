@@ -1,25 +1,22 @@
-﻿@inject Microsoft.ApplicationInsights.AspNetCore.JavaScriptSnippet JavaScriptSnippet
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
-<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta property="og:description" content="When connecting political and non-profit organizations to the tech community, we'll sometimes need to throw a proof-of-concept together quickly just to illustrate a point.  That's the purpose of this WhipStat site." />
     <meta property="og:image" content="http://www.whipstat.com/images/logo.jpg" />
-
     <title>@ViewData["Title"] - WhipStat</title>
 
-    <environment names="Development">
+    <environment include="Development">
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
         <link rel="stylesheet" href="~/css/site.css" />
     </environment>
-    <environment names="Staging,Production">
+    <environment exclude="Development">
         <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css"
               asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css"
               asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
         <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
     </environment>
-    @Html.Raw(JavaScriptSnippet.FullScript)
 </head>
 <body>
     <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -42,6 +39,7 @@
                         <a class="dropdown-toggle" role="button" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown">Projects <span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             <li><a asp-area="" asp-controller="Projects" asp-action="Records">Voting Records</a></li>
+                            <li><a asp-area="" asp-controller="Projects" asp-action="OrgDonors">Organizational Donors</a></li>
                             <li><a asp-area="" asp-controller="Projects" asp-action="Voters">Voter Registration</a></li>
                             <li><a asp-area="" asp-controller="Projects" asp-action="Donors">Campaign Contributions</a></li>
                             <li><a asp-area="" asp-controller="Projects" asp-action="Results">Election Results</a></li>
@@ -56,16 +54,16 @@
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; 2017 - WhipStat</p>
+            <p>&copy; 2017-18 - WhipStat</p>
         </footer>
     </div>
 
-    <environment names="Development">
+    <environment include="Development">
         <script src="~/lib/jquery/dist/jquery.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
     </environment>
-    <environment names="Staging,Production">
+    <environment exclude="Development">
         <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.2.0.min.js"
                 asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
                 asp-fallback-test="window.jQuery"

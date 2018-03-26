@@ -1,0 +1,124 @@
+@model WhipStat.Models.ProjectViewModels.OrgDonorsViewModel
+<h2>Organizational Donors</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <h3>Partisan Distribution of Organizational Donors:</h3>
+        <div id="Chart">
+            <div class="center-block" style="opacity:0.2; width: 40%; margin-top: 200px">
+                <img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <section>
+            <h3>Filters:</h3>
+            <form asp-controller="Projects" asp-action="OrgDonors" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <h4 class="list-group-item-heading">Jurisdication Type:</h4>
+                        <select asp-for="Jurisdiction" asp-items="Model.Jurisdictions"></select>
+                    </li>
+                    <li class="list-group-item">
+                        <h4 class="list-group-item-heading">Date Range:</h4>
+                        <select asp-for="From" asp-items="Model.OddYears"></select> to
+                        <select asp-for="To" asp-items="Model.EvenYears"></select>
+                    </li>
+                    <li class="list-group-item" id="Submit" style="display:none">
+                        <div class="list-group-item-text">
+                            <button class="btn center-block" type="submit" id="Download">
+                                <span class="glyphicon glyphicon-cloud-download"></span> Download
+                            </button>
+                        </div>
+                    </li>
+                    <li class="list-group-item" id="Loading" style="opacity:0.5">
+                        <div class="list-group-item-text">
+                            <div class="progress center-block" style="width: 40%; margin-top: 7px; margin-bottom: 7px">
+                                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%">Loading...</div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </form>
+        </section>
+        <section>
+            <h3>Methodology:</h3>
+            <p>
+                The partisanship score for each donor is the difference in percentage of donations by party, giving each a range from 100 (exclusively Republican) to -100 (exclusively Democrat).
+            </p>
+        </section>
+        <section>
+            <h3>Related Links</h3>
+            <p>
+                More information is available at the sites below:
+            </p>
+            <ul>
+                <li><a href="https://blog.voter-science.com/2017/04/11/analyzing-the-wa-political-spectrum/">VS Blog - Analyzing the WA Political Spectrum</a></li>
+                <li><a href="https://www.pdc.wa.gov/browse/open-data">PDC Open Data</a></li>
+            </ul>
+        </section>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        var loading = true;
+
+        // Load the Visualization API and the corechart package.
+        google.charts.load('current', { 'packages': ['corechart'] });
+
+        // Set a callback to run when the Google Visualization API is loaded.
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Callback that creates and populates a data table,
+        // instantiates the scatter chart, passes in the data and
+        // draws it.
+        function drawChart() {
+
+            $.get("/Projects/GetDonorDataTable/?" + $('form').serialize(), function (jsonData) {
+                // Create our data table out of JSON data loaded from server.
+                var data = new google.visualization.DataTable(jsonData);
+
+                // Get filter settings.
+                var jurisdiction = $("#Jurisdiction option:selected").text();
+                var from = $("#From option:selected").text();
+                var to = $("#To option:selected").text();
+                var options = {
+                    title: jurisdiction + " Races (" + from + "-" + to + ")",
+                    height: 640,
+                    chartArea: { width: '80%', height: '80%' },
+                    legend: { position: 'none' },
+                    vAxis: { format: '$#,###,###' },
+                    hAxis: { format: '#%' },
+                    dataOpacity: 0.8,
+                    pointSize: 10,
+                    animation: { duration: 1000, easing: 'out', startup: true },
+                    tooltip: { isHtml: true }
+                }
+
+                // Instantiate and draw our chart, passing in some options.
+                var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
+                chart.draw(data, options);
+                $("#Loading").hide();
+                $("#Submit").show();
+                loading = false;
+            });
+        }
+
+    </script>
+    <script>
+        $("select").change(function () {
+            if (!loading) {
+                $("#Submit").hide();
+                $("#Loading").show();
+                drawChart();
+            }
+        }).change();
+        $("#Download").click(function () {
+            $("#Submit").hide();
+            $("#Loading").show();
+        }).change();
+    </script>
+}

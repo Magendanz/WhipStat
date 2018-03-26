@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WhipStat.Models.AccountViewModels
+namespace WebApplication.Models.AccountViewModels
 {
     public class RegisterViewModel
     {

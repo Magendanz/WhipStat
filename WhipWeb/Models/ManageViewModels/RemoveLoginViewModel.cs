@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WhipStat.Models.ManageViewModels
+namespace WebApplication.Models.ManageViewModels
 {
     public class RemoveLoginViewModel
     {

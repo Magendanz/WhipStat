@@ -85,7 +85,7 @@
         // draws it.
         function drawChart() {
 
-            $.get("/Projects/GetDataTable/?" + $('form').serialize(), function (jsonData) {
+            $.get("/Projects/GetMemberDataTable/?" + $('form').serialize(), function (jsonData) {
                 // Create our data table out of JSON data loaded from server.
                 var data = new google.visualization.DataTable(jsonData);
 

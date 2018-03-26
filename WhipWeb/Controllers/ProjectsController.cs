@@ -1,29 +1,39 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 using WhipStat.Data;
+using WhipStat.Helpers;
 using WhipStat.Models.LegTech;
+using WhipStat.Models.PDC;
 using WhipStat.Models.ProjectViewModels;
+
 
 namespace WhipStat.Controllers
 {
     public class ProjectsController : Controller
     {
+        const string SessionKeyFileName = "_FileName";
+        const string SessionKeyContentType = "_ContentType";
+        const string SessionKeyContents = "_Contents";
+
         VoterDbContext VoterDb = new VoterDbContext();
         DonorDbContext DonorDb = new DonorDbContext();
         ResultDbContext ResultDb = new ResultDbContext();
         RecordDbContext RecordDb = new RecordDbContext();
 
         SelectListItem SelectPrompt = new SelectListItem { Value = "0", Text = "Select...", Selected = true, Disabled = true };
-        String TooltipHtml = System.IO.File.ReadAllText(@"Views\Projects\Tooltip.html");
+        String MemberTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\MemberTooltip.html"));
+        String DonorTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorTooltip.html"));
+        String DonorPointStyle = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorPointStyle.html"));
 
         private readonly IHostingEnvironment _hostingEnvironment;
         public ProjectsController(IHostingEnvironment hostingEnvironment)
@@ -43,6 +53,7 @@ namespace WhipStat.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [DisableRequestSizeLimit]
         public IActionResult Voters(VotersViewModel model)
         {
             var precincts = VoterDb.GetPrecincts(model.District);
@@ -52,9 +63,9 @@ namespace WhipStat.Controllers
             if (model.Precinct < Int32.MaxValue)
             {
                 // A single precinct list is served up directly
-                TempData["FileName"] = $"{precincts[model.Precinct]}.txt";
-                TempData["ContentType"] = "text/tab-separated-values";
-                TempData["Bytes"] = Encoding.UTF8.GetBytes(VoterDb.GetVoters(model.District, model.Precinct));
+                HttpContext.Session.SetString(SessionKeyFileName, $"{precincts[model.Precinct]}.txt");
+                HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
+                HttpContext.Session.SetString(SessionKeyContents, VoterDb.GetVoters(model.District, model.Precinct));
             }
             else
             {
@@ -71,9 +82,9 @@ namespace WhipStat.Controllers
                 }
 
                 // Save FileStreamResult arguments for subsequent GET
-                TempData["FileName"] = $"LD{model.District}.zip";
-                TempData["ContentType"] = "application/zip";
-                TempData["Bytes"] = stream.ToArray();
+                HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}.zip");
+                HttpContext.Session.SetString(SessionKeyContentType, "application/zip");
+                HttpContext.Session.SetString(SessionKeyContents, Encoding.UTF8.GetString(stream.ToArray()));
             }
 
             // Serve up the download page and deliver file
@@ -111,13 +122,14 @@ namespace WhipStat.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [DisableRequestSizeLimit]
         public IActionResult Donors(DonorsViewModel model)
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            TempData["FileName"] = $"LD{model.District}-{model.Party}.txt";
-            TempData["ContentType"] = "text/tab-separated-values";
-            TempData["Bytes"] = Encoding.UTF8.GetBytes(DonorDb.GetDonors(model.Party, GetZipCodes(model.District)));
+            HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}-{model.Party}.txt");
+            HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
+            HttpContext.Session.SetString(SessionKeyContents, DonorDb.GetDonors(model.Party, GetZipCodes(model.District)));
 
             // Serve up the download page and deliver file
             return View("Download");
@@ -144,13 +156,14 @@ namespace WhipStat.Controllers
         }
 
         [HttpPost]
+        [DisableRequestSizeLimit]
         public IActionResult Results(ResultsViewModel model)
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            TempData["FileName"] = $"LD{model.District}-{model.Race} ({model.Year} {model.Election}).txt";
-            TempData["ContentType"] = "text/tab-separated-values";
-            TempData["Bytes"] = Encoding.UTF8.GetBytes(ResultDb.GetResults(model.District, model.Year, model.Election, model.Race, model.Entry));
+            HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}-{model.Race} ({model.Year} {model.Election}).txt");
+            HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
+            HttpContext.Session.SetString(SessionKeyContents, ResultDb.GetResults(model.District, model.Year, model.Election, model.Race, model.Entry));
 
             // Serve up the download page and deliver file
             return View("Download");
@@ -212,20 +225,27 @@ namespace WhipStat.Controllers
 
         public IActionResult Records()
         {
-            return View(new RecordsViewModel() { Areas = GetPolicyAreaList(), OddYears = GetYearList(2003), EvenYears = GetYearList(2004),
-                Chambers = GetChamberList(), To = "2018" });
+            return View(new RecordsViewModel()
+            {
+                Areas = GetPolicyAreaList(),
+                OddYears = GetYearList(2003, 2),
+                EvenYears = GetYearList(2004, 2),
+                Chambers = GetChamberList(),
+                To = "2018"
+            });
         }
 
         [HttpPost]
+        [DisableRequestSizeLimit]
         public IActionResult Records(RecordsViewModel model)
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
             var area = model.Area == "0" ? "All Policy Areas" : RecordDb.PolicyAreas.Single(i => i.Id == Convert.ToInt32(model.Area)).Name;
             var chamber = model.Chamber == "0" ? "Both Chambers" : model.Chamber;
-            TempData["FileName"] = $"Partisan Leaderboard - {area}, {chamber} ({model.From}-{model.To}).txt";
-            TempData["ContentType"] = "text/tab-separated-values";
-            TempData["Bytes"] = Encoding.UTF8.GetBytes(RecordDb.GetLeaderboard(model.Chamber, Convert.ToInt16(model.Area), Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
+            HttpContext.Session.SetString(SessionKeyFileName, $"Partisan Leaderboard - {area}, {chamber} ({model.From}-{model.To}).txt");
+            HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
+            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetLeaderboard(model.Chamber, Convert.ToInt16(model.Area), Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
 
             // Serve up the download page and deliver file
             return View("Download");
@@ -241,11 +261,11 @@ namespace WhipStat.Controllers
             return list;
         }
 
-        private List<SelectListItem> GetYearList(short start)
+        private List<SelectListItem> GetYearList(short start, short increment = 1)
         {
             var list = new List<SelectListItem>();
 
-            for (short year = start; year < 2019; year += 2)
+            for (short year = start; year <= DateTime.Today.Year; year += increment)
                 list.Add(new SelectListItem { Value = year.ToString(), Text = year.ToString() });
 
             return list;
@@ -262,7 +282,7 @@ namespace WhipStat.Controllers
         }
 
         [HttpGet]
-        public DataTable GetDataTable(string chamber, short area, short from, short to)
+        public DataTable GetMemberDataTable(string chamber, short area, short from, short to)
         {
             var points = new List<Point>();
             var members = RecordDb.Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.Party).ToList();
@@ -279,7 +299,7 @@ namespace WhipStat.Controllers
                 }
             }
 
-            return ConvertPoints(points);
+            return ConvertMemberPoints(points);
         }
 
         private double Stack(double x, List<Point> points)
@@ -294,12 +314,7 @@ namespace WhipStat.Controllers
             return y;
         }
 
-        private string GetTooltip(Member member, double score)
-        {
-            return String.Format(TooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
-        }
-
-        private DataTable ConvertPoints(List<Point> points)
+        private DataTable ConvertMemberPoints(List<Point> points)
         {
             var dt = new DataTable
             {
@@ -349,16 +364,104 @@ namespace WhipStat.Controllers
                 return list.ElementAt(index);
         }
 
+        public IActionResult OrgDonors()
+        {
+            return View(new OrgDonorsViewModel()
+            {
+                OddYears = GetYearList(2008),
+                EvenYears = GetYearList(2008),
+                Jurisdictions = GetJurisdictionList(),
+                From = "2007",
+                To = "2018"
+            });
+        }
+
+        [HttpPost]
+        [DisableRequestSizeLimit]
+        public IActionResult OrgDonors(OrgDonorsViewModel model)
+        {
+            // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
+            // Do the time consuming work now, while loading indicator is displayed
+            HttpContext.Session.SetString(SessionKeyFileName, $"Donor Leaderboard - {model.Jurisdiction} Races ({model.From}-{model.To}).txt");
+            HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
+            HttpContext.Session.SetString(SessionKeyContents, DonorDb.GetLobbyLeaders(model.Jurisdiction, Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
+
+            // Serve up the download page and deliver file
+            return View("Download");
+        }
+
+        private List<SelectListItem> GetJurisdictionList()
+        {
+            return new List<SelectListItem> {
+                new SelectListItem { Value = "Legislative", Text = "Legislative" },
+                new SelectListItem { Value = "Statewide", Text = "Statewide" },
+            };
+        }
+
+        [HttpGet]
+        public DataTable GetDonorDataTable(string jurisdiction, short from, short to)
+        {
+            var points = new List<Point>();
+            var donors = DonorDb.Donors.Where(i => i.Aggregate > 10000).ToList();
+            foreach (var donor in donors)
+            {
+                var subtotals = DonorDb.Subtotals.Where(i => i.Donor == donor.ID && i.Jurisdiction == jurisdiction && (i.Year >= from && i.Year <= to)).ToList();
+                if (subtotals.Count > 0)
+                {
+                    var total = (double)subtotals.Where(i => i.Donor == donor.ID).Sum(i => i.Total);
+                    var bias = (double)subtotals.Where(i => i.Donor == donor.ID).Sum(i => i.Bias);
+                    var score = bias / total;
+                    points.Add(new Point { x = score, y = total, Label = GetTooltip(donor, total, score) });
+                }
+            }
+
+            return ConvertDonorPoints(points);
+        }
+
+        private DataTable ConvertDonorPoints(List<Point> points)
+        {
+           var dt = new DataTable
+            {
+                cols = new List<ColInfo> {
+                    new ColInfo { label = "% bias", type = "number" },
+                    new ColInfo { label = "Contributions", type = "number" },
+                    new ColInfo { role = "style", type = "string" },
+                    new ColInfo { role = "tooltip", type = "string", p = new Dictionary<string, string> { { "html", "true" } } }
+                },
+                rows = new List<DataPointSet>(),
+                p = new Dictionary<string, string>()
+            };
+
+            foreach (var point in points)
+            {
+                var dps = new DataPointSet { c = new DataPoint[dt.cols.Count] };
+                dps.c[0] = new DataPoint { v = point.x.ToString() };
+                dps.c[1] = new DataPoint { v = point.y.ToString() };
+                dps.c[2] = new DataPoint { v = GetPointStyle(point.x) };
+                dps.c[3] = new DataPoint { v = point.Label };
+                dt.rows.Add(dps);
+            }
+
+            return dt;
+        }
+
+        private string GetTooltip(Member member, double score) => String.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
+        private string GetTooltip(Donor donor, double total, double score) => String.Format(DonorTooltipHtml, donor.Name, total, score);
+        private string GetPointStyle(double value) => String.Format(DonorPointStyle, ColorUtilities.GetIndexedColorOnGradient(value + 0.5, "#4285F4", "#DB4437"));
+
         public IActionResult Download()
         {
-            if (TempData.Count() > 0)
+            try
             {
                 // Download file stream to client
-                return File((byte[])TempData["Bytes"], (string)TempData["ContentType"], (string)TempData["FileName"]);
+                var fileDownloadName = HttpContext.Session.GetString(SessionKeyFileName);
+                var contentType = HttpContext.Session.GetString(SessionKeyContentType);
+                var fileContents = Encoding.UTF8.GetBytes(HttpContext.Session.GetString(SessionKeyContents));
+                return File(fileContents, contentType, fileDownloadName);
             }
-            else
+            catch
             {
-                // We lost our TempData!
+                // We lost our session data!
                 return View("Error");
             }
         }

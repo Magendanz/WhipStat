@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace WhipStat.Data.Migrations
+namespace WebApplication.Data.Migrations
 {
     public partial class CreateIdentitySchema : Migration
     {
