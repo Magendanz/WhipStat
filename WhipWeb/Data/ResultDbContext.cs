@@ -28,25 +28,27 @@ namespace WhipStat.Data
             // Get the requested election results
             var results = Results.Where(i => codes.Contains(i.PrecinctCode) && i.Year == year && i.Election == election && i.Race == race).ToList();
 
-            double totalcount = results.Where(i => i.CounterType == entry).Sum(i => i.Count);
+            double totalmatches = results.Where(i => i.CounterType == entry).Sum(i => i.Count);
             double totalballots = results.Where(i => i.CounterType == "Times Counted").Sum(i => i.Count);
+            double totalvotes = totalballots - results.Where(i => i.CounterType.EndsWith(" Voted")).Sum(i => i.Count);
             double totalvoters = results.Where(i => i.CounterType == "Registered Voters").Sum(i => i.Count);
-            double percentvote = totalcount / totalballots;
+            double percentvote = totalmatches / totalvotes;
             double percentturnout = totalballots / totalvoters;
 
             // TODO: This is a tab-delimited list rignt now, but we should switch to CSV output
             sb.AppendLine("Precinct\tResult\tTurnout");
             foreach (var precinct in precincts)
             {
-                double count = 0, ballots = 0, voters = 0;
+                double matches = 0, ballots = 0, votes = 0, voters = 0;
                 var result = results.Where(i => i.PrecinctCode == precinct.PrecinctCode);
                 if (result.Any())
                 {
-                    count = result.Single(i => i.CounterType == entry).Count;
+                    matches = result.Single(i => i.CounterType == entry).Count;
                     ballots = result.Single(i => i.CounterType == "Times Counted").Count;
+                    votes = ballots - result.Where(i => i.CounterType.EndsWith(" Voted")).Sum(i => i.Count);
                     voters = result.Single(i => i.CounterType == "Registered Voters").Count;
                 }
-                sb.AppendLine(String.Format("{0}\t{1:P2}\t{2:P2}", precinct.PrecinctName, count / ballots - percentvote, ballots / voters - percentturnout));
+                sb.AppendLine(String.Format("{0}\t{1:P2}\t{2:P2}", precinct.PrecinctName, matches / votes - percentvote, ballots / voters - percentturnout));
             }
             sb.AppendLine(String.Format("Average:\t{0:P2}\t{1:P2}", percentvote, percentturnout));
 

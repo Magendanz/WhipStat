@@ -63,7 +63,7 @@ namespace WhipStat.Controllers
             if (model.Precinct < Int32.MaxValue)
             {
                 // A single precinct list is served up directly
-                HttpContext.Session.SetString(SessionKeyFileName, $"{precincts[model.Precinct]}.txt");
+                HttpContext.Session.SetString(SessionKeyFileName, $"{precincts[model.Precinct]}.tsv");
                 HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
                 HttpContext.Session.SetString(SessionKeyContents, VoterDb.GetVoters(model.District, model.Precinct));
             }
@@ -75,7 +75,7 @@ namespace WhipStat.Controllers
                 {
                     foreach (var item in precincts)
                     {
-                        var entry = zip.CreateEntry($"{item.Value}.txt");
+                        var entry = zip.CreateEntry($"{item.Value}.tsv");
                         using (var writer = new StreamWriter(entry.Open()))
                             writer.Write(VoterDb.GetVoters(model.District, item.Key));
                     }
@@ -127,7 +127,7 @@ namespace WhipStat.Controllers
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}-{model.Party}.txt");
+            HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}-{model.Party}.tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
             HttpContext.Session.SetString(SessionKeyContents, DonorDb.GetDonors(model.Party, GetZipCodes(model.District)));
 
@@ -161,7 +161,7 @@ namespace WhipStat.Controllers
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}-{model.Race} ({model.Year} {model.Election}).txt");
+            HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}-{model.Race} ({model.Year} {model.Election}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
             HttpContext.Session.SetString(SessionKeyContents, ResultDb.GetResults(model.District, model.Year, model.Election, model.Race, model.Entry));
 
@@ -243,7 +243,7 @@ namespace WhipStat.Controllers
             // Do the time consuming work now, while loading indicator is displayed
             var area = model.Area == "0" ? "All Policy Areas" : RecordDb.PolicyAreas.Single(i => i.Id == Convert.ToInt32(model.Area)).Name;
             var chamber = model.Chamber == "0" ? "Both Chambers" : model.Chamber;
-            HttpContext.Session.SetString(SessionKeyFileName, $"Partisan Leaderboard - {area}, {chamber} ({model.From}-{model.To}).txt");
+            HttpContext.Session.SetString(SessionKeyFileName, $"Partisan Leaderboard - {area}, {chamber} ({model.From}-{model.To}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
             HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetLeaderboard(model.Chamber, Convert.ToInt16(model.Area), Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
 
@@ -382,7 +382,7 @@ namespace WhipStat.Controllers
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            HttpContext.Session.SetString(SessionKeyFileName, $"Donor Leaderboard - {model.Jurisdiction} Races ({model.From}-{model.To}).txt");
+            HttpContext.Session.SetString(SessionKeyFileName, $"Donor Leaderboard - {model.Jurisdiction} Races ({model.From}-{model.To}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
             HttpContext.Session.SetString(SessionKeyContents, DonorDb.GetLobbyLeaders(model.Jurisdiction, Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
 
