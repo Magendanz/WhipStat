@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WhipStat.Models.LegTech
 {
@@ -15,8 +14,6 @@ namespace WhipStat.Models.LegTech
         public string Committees { get; set; }
 
         public override string ToString()
-        {
-            return Name;
-        }
+            => Name;
     }
 }

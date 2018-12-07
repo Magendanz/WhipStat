@@ -16,8 +16,8 @@ namespace WhipStat.Data
         public DbSet<Vote> Votes { get; set; }
         public DbSet<RollCall> RollCalls { get; set; }
         public DbSet<Bill> Bills { get; set; }
-        public DbSet<Member> Members { get; set; }
-        public DbSet<Committee> Committees { get; set; }
+        public DbSet<Models.LWS.Member> Members { get; set; }
+        public DbSet<Models.LWS.Committee> Committees { get; set; }
         public DbSet<PolicyArea> PolicyAreas { get; set; }
         public DbSet<Score> Scores { get; set; }
 
@@ -29,9 +29,9 @@ namespace WhipStat.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Vote>().HasKey(t => new { t.RollCall_Id, t.Member_Id });
-            modelBuilder.Entity<Bill>().HasKey(t => new { t.BillNumber, t.Year });
-            modelBuilder.Entity<Score>().HasKey(t => new { t.Member_Id, t.Year, t.PolicyArea });
+            modelBuilder.Entity<Bill>().HasKey(t => new { t.BillId, t.Biennium });
+            modelBuilder.Entity<Vote>().HasKey(t => new { t.RollCallId, t.MemberId });
+            modelBuilder.Entity<Score>().HasKey(t => new { t.MemberId, t.Year, t.PolicyArea });
         }
 
         public string GetLeaderboard(string chamber, short area, short begin, short end)
@@ -42,7 +42,7 @@ namespace WhipStat.Data
             sb.AppendLine("Last Name\tFirst Name\tDistrict\tParty\tScore");
             foreach (var member in members)
             {
-                var scores = Scores.Where(i => i.Member_Id == member.Id && i.PolicyArea == area && i.Year >= begin && i.Year <= end).ToList();
+                var scores = Scores.Where(i => i.MemberId == member.Id && i.PolicyArea == area && i.Year >= begin && i.Year <= end).ToList();
                 var total = scores.Sum(i => i.Total);
                 var count = scores.Sum(i => i.Count);
                 if (count > 10)

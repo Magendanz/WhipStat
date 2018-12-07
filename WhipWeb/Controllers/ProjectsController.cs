@@ -30,10 +30,10 @@ namespace WhipStat.Controllers
         ResultDbContext ResultDb = new ResultDbContext();
         RecordDbContext RecordDb = new RecordDbContext();
 
-        SelectListItem SelectPrompt = new SelectListItem { Value = "0", Text = "Select...", Selected = true, Disabled = true };
-        String MemberTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\MemberTooltip.html"));
-        String DonorTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorTooltip.html"));
-        String DonorPointStyle = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorPointStyle.html"));
+        readonly SelectListItem SelectPrompt = new SelectListItem { Value = "0", Text = "Select...", Selected = true, Disabled = true };
+        readonly string MemberTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\MemberTooltip.html"));
+        readonly string DonorTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorTooltip.html"));
+        readonly string DonorPointStyle = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorPointStyle.html"));
 
         private readonly IHostingEnvironment _hostingEnvironment;
         public ProjectsController(IHostingEnvironment hostingEnvironment)
@@ -289,7 +289,7 @@ namespace WhipStat.Controllers
 
             foreach (var member in members)
             {
-                var scores = RecordDb.Scores.Where(i => i.Member_Id == member.Id && i.PolicyArea == area && i.Year >= from && i.Year <= to).ToList();
+                var scores = RecordDb.Scores.Where(i => i.MemberId == member.Id && i.PolicyArea == area && i.Year >= from && i.Year <= to).ToList();
                 var total = scores.Sum(i => i.Total);
                 var count = scores.Sum(i => i.Count);
                 if (count > 10)
@@ -445,7 +445,7 @@ namespace WhipStat.Controllers
             return dt;
         }
 
-        private string GetTooltip(Member member, double score) => String.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
+        private string GetTooltip(Models.LWS.Member member, double score) => String.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
         private string GetTooltip(Donor donor, double total, double score) => String.Format(DonorTooltipHtml, donor.Name, total, score);
         private string GetPointStyle(double value) => String.Format(DonorPointStyle, ColorUtilities.GetIndexedColorOnGradient(value + 0.5, "#4285F4", "#DB4437"));
 

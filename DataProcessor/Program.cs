@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using WhipStat.Data;
+using WhipStat.Services;
 
 namespace DataProcessor
 {
@@ -8,19 +9,16 @@ namespace DataProcessor
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting data processing...");
+            Console.WriteLine("Starting data processing...\n");
 
             using (var db = new RecordDbContext())
             {
-                //db.ProcessNewVotes();
-                //db.UpdateMembers();
-                //db.FixupMembers();
-                //db.IdentifyPhotos();
-                //db.UpdateCommittees();
-                //db.UpdatePolicyAreas();
+                //db.GetMembers();
+                //db.GetCommittees();
+                //db.GetBills();
                 //db.UpdateBillInfo();
-                //db.ScoreBills();
-                //db.ScoreMembers();
+                //db.GetRollCalls();
+                db.ScoreMembers();
             }
 
             using (var db = new DonorDbContext())
@@ -35,7 +33,6 @@ namespace DataProcessor
                 //File.WriteAllText("Turnout.tsv", db.GetResults("Precinct Turnout.txt", 5));
             }
 
-            Console.WriteLine();
             Console.Write("Press any key to continue...");
             Console.ReadKey();
         }

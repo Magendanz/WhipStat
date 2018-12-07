@@ -1,29 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
+using System.ComponentModel.DataAnnotations;
 
-namespace WhipStat.Models.LegTech
+namespace WhipStat.Models.LWS
 {
     [DataContract(Namespace = "http://WSLWebServices.leg.wa.gov/")]
     public class Member
     {
-        [Key]
-        [DataMember(IsRequired = true, Order = 0)]
+        [Key, DataMember(IsRequired = true, Order = 0)]
         public int Id { get; set; }
         [DataMember(IsRequired = true, Order = 1)]
         public string Name { get; set; }
-        [DataMember(Order = 2)]
+        [DataMember(IsRequired = true, Order = 2)]
         public string LongName { get; set; }
-        [DataMember(Order = 3)]
+        [DataMember(IsRequired = true, Order = 3)]
         public string Agency { get; set; }
-        [DataMember(Order = 4)]
+        [DataMember(IsRequired = true, Order = 4)]
         public string Acronym { get; set; }
         [DataMember(IsRequired = true, Order = 5)]
         public string Party { get; set; }
-        [DataMember(Order = 6)]
-        public short District { get; set; }
+        [DataMember(IsRequired = true, Order = 6)]
+        public Int16 District { get; set; }
         [DataMember(Order = 7)]
         public string Phone { get; set; }
         [DataMember(Order = 8)]
@@ -33,19 +31,8 @@ namespace WhipStat.Models.LegTech
         [DataMember(IsRequired = true, Order = 10)]
         public string LastName { get; set; }
 
-        public override string ToString()
-        {
-            return $"{LastName}, {FirstName}";
-        }
-
-        public override bool Equals(Object obj)
-        {
-            return String.Equals(LastName, ((Member)obj).LastName) && String.Equals(FirstName, ((Member)obj).FirstName);
-        }
-
-        public override int GetHashCode()
-        {
-            return LastName.GetHashCode() ^ FirstName.GetHashCode();
-        }
+        public override string ToString() => LongName;
+        public override bool Equals(Object obj) => Id == ((Member)obj).Id;
+        public override int GetHashCode() => Id;
     }
 }

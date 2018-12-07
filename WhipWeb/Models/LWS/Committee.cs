@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
+using System.ComponentModel.DataAnnotations;
 
-namespace WhipStat.Models.LegTech
+namespace WhipStat.Models.LWS
 {
     [DataContract(Namespace = "http://WSLWebServices.leg.wa.gov/")]
     public class Committee
     {
-        [Key]
-        [DataMember(IsRequired = true, Order = 0)]
-        public short Id { get; set; }
+        [Key, DataMember(IsRequired = true, Order = 0)]
+        public int Id { get; set; }
         [DataMember(IsRequired = true, Order = 1)]
         public string Name { get; set; }
         [DataMember(IsRequired = true, Order = 2)]
@@ -23,18 +21,8 @@ namespace WhipStat.Models.LegTech
         [DataMember(Order = 5)]
         public string Phone { get; set; }
 
-        public override string ToString()
-        {
-            return $"{LongName}";
-        }
-        public override bool Equals(Object obj)
-        {
-            return Id == ((Committee)obj).Id;
-        }
-
-        public override int GetHashCode()
-        {
-            return Id;
-        }
+        public override string ToString() => LongName;
+        public override bool Equals(Object obj) => Id == ((Committee)obj).Id;
+        public override int GetHashCode() => Id;
     }
 }
