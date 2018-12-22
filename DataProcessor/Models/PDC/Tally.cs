@@ -10,8 +10,11 @@ namespace WhipStat.Models.PDC
         public short Year { get; set; }
         public string Jurisdiction { get; set; }
         public int Count { get; set; }
-        public decimal Total { get; set; }
-        public decimal Bias { get; set; }
+        public int Wins { get; set; }
+        public int Unopposed { get; set; }
+        public double Total { get; set; }
+        public double Republican { get; set; }
+        public double Democrat { get; set; }
 
         public override string ToString()
         {

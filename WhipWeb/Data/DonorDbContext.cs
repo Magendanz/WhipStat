@@ -44,16 +44,19 @@ namespace WhipStat.Data
         public string GetLobbyLeaders(string jurisdiction, short begin, short end)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Name\tCount\tTotal\tScore");
+            sb.AppendLine("Name\tCount\tTotal\tBias\tWinning");
             var donors = Donors.Where(i => i.Aggregate > 10000).OrderByDescending(i => i.Aggregate).ToList();
             foreach (var donor in donors)
             {
-                var totals = Subtotals.Where(i => i.Donor == donor.ID && i.Jurisdiction == jurisdiction && (i.Year >= begin && i.Year <= end)).ToList();
-                if (totals.Count > 1)
+                var subtotals = Subtotals.Where(i => i.Donor == donor.ID && i.Jurisdiction == jurisdiction && (i.Year >= begin && i.Year <= end)).ToList();
+                if (subtotals.Count > 0)
                 {
-                    var total = totals.Where(i => i.Donor == donor.ID).Sum(i => i.Total);
-                    var bias = totals.Where(i => i.Donor == donor.ID).Sum(i => i.Bias);
-                    sb.AppendLine($"{donor.Name}\t{totals.Count}\t{total:C0}\t{bias / total:P1}");
+                    var tallies = subtotals.Where(i => i.Donor == donor.ID);
+                    var total = tallies.Sum(i => i.Total);
+                    var bias = (tallies.Sum(i => i.Republican) - tallies.Sum(i => i.Democrat)) / total;
+                    var winning = (double) tallies.Sum(i => i.Wins) / tallies.Sum(i => i.Count);
+
+                    sb.AppendLine($"{donor.Name}\t{subtotals.Count}\t{total:C0}\t{bias:P1}\t{winning:p1}");
                 }
             }
 

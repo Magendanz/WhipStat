@@ -14,7 +14,7 @@ namespace WhipStat.Models.PDC
         public string City { get; set; }
         public string State { get; set; }
         public string Zip { get; set; }
-        public decimal? Aggregate { get; set; }
+        public double? Aggregate { get; set; }
 
         public override string ToString()
         {

@@ -14,7 +14,7 @@ namespace WhipStat.Data
         public DbSet<Office> Offices { get; set; }
         public DbSet<Party> Parties { get; set; }
         public DbSet<Donor> Donors { get; set; }
-        public DbSet<Tally> Totals { get; set; }
+        public DbSet<Tally> Subtotals { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -47,7 +47,7 @@ namespace WhipStat.Data
             foreach (var donor in Donors.ToList())
             {
                 Console.WriteLine($"  Analyzing '{donor.Name}'...");
-                var contributions = Totals.Where(i => i.Donor == donor.ID).ToList();
+                var contributions = Subtotals.Where(i => i.Donor == donor.ID).ToList();
                 donor.Aggregate = contributions.Sum(i => i.Total);
             }
 

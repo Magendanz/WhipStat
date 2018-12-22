@@ -408,10 +408,11 @@ namespace WhipStat.Controllers
                 var subtotals = DonorDb.Subtotals.Where(i => i.Donor == donor.ID && i.Jurisdiction == jurisdiction && (i.Year >= from && i.Year <= to)).ToList();
                 if (subtotals.Count > 0)
                 {
-                    var total = (double)subtotals.Where(i => i.Donor == donor.ID).Sum(i => i.Total);
-                    var bias = (double)subtotals.Where(i => i.Donor == donor.ID).Sum(i => i.Bias);
-                    var score = bias / total;
-                    points.Add(new Point { x = score, y = total, Label = GetTooltip(donor, total, score) });
+                    var tallies = subtotals.Where(i => i.Donor == donor.ID).ToList();
+                    var total = tallies.Sum(i => i.Total);
+                    var bias = (tallies.Sum(i => i.Republican) - tallies.Sum(i => i.Democrat)) / total;
+                    var winning = (double) tallies.Sum(i => i.Wins) / tallies.Sum(i => i.Count);
+                    points.Add(new Point { x = bias, y = total, Label = GetTooltip(donor, total, bias, winning) });
                 }
             }
 
@@ -446,7 +447,7 @@ namespace WhipStat.Controllers
         }
 
         private string GetTooltip(Models.LWS.Member member, double score) => String.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
-        private string GetTooltip(Donor donor, double total, double score) => String.Format(DonorTooltipHtml, donor.Name, total, score);
+        private string GetTooltip(Donor donor, double total, double bias, double winning) => String.Format(DonorTooltipHtml, donor.Name, total, bias, winning);
         private string GetPointStyle(double value) => String.Format(DonorPointStyle, ColorUtilities.GetIndexedColorOnGradient(value + 0.5, "#4285F4", "#DB4437"));
 
         public IActionResult Download()

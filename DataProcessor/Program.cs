@@ -18,7 +18,7 @@ namespace DataProcessor
                 //db.GetBills();
                 //db.UpdateBillInfo();
                 //db.GetRollCalls();
-                db.ScoreMembers();
+                //db.ScoreMembers();
             }
 
             using (var db = new DonorDbContext())
