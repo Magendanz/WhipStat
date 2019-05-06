@@ -19,7 +19,7 @@ namespace DataProcessor
                 //db.UpdateBillInfo();
                 //db.GetRollCalls();
                 //db.ScoreMembers();
-                db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
+                //db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
             }
 
             using (var db = new DonorDbContext())
