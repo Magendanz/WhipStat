@@ -19,6 +19,7 @@ namespace DataProcessor
                 //db.UpdateBillInfo();
                 //db.GetRollCalls();
                 //db.ScoreMembers();
+                db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
             }
 
             using (var db = new DonorDbContext())
@@ -32,9 +33,6 @@ namespace DataProcessor
                 //File.WriteAllText("Ballot Measures.tsv", db.GetResults("Conservative Ballot Measures.txt", 5));
                 //File.WriteAllText("Turnout.tsv", db.GetResults("Precinct Turnout.txt", 5));
             }
-
-            Console.Write("Press any key to continue...");
-            Console.ReadKey();
         }
     }
 }

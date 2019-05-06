@@ -231,7 +231,7 @@ namespace WhipStat.Controllers
                 OddYears = GetYearList(2003, 2),
                 EvenYears = GetYearList(2004, 2),
                 Chambers = GetChamberList(),
-                To = "2018"
+                To = "2020"
             });
         }
 
@@ -261,11 +261,14 @@ namespace WhipStat.Controllers
             return list;
         }
 
-        private List<SelectListItem> GetYearList(short start, short increment = 1)
+        private List<SelectListItem> GetYearList(int start, short increment = 1)
         {
             var list = new List<SelectListItem>();
 
-            for (short year = start; year <= DateTime.Today.Year; year += increment)
+            // This is the end of the current biennium
+            var end = (DateTime.Today.Year + 1) / 2 * 2;
+
+            for (var year = start; year <= end; year += increment)
                 list.Add(new SelectListItem { Value = year.ToString(), Text = year.ToString() });
 
             return list;

@@ -26,7 +26,7 @@ namespace WhipStat.Data
         public DbSet<Score> Scores { get; set; }
 
         //public readonly string[] biennia = { "2017-18", "2015-16" };
-        public readonly string[] biennia = { "2017-18", "2015-16", "2013-14", "2011-12", "2009-10", "2007-08", "2005-06", "2003-04" };
+        public readonly string[] biennia = { "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10", "2007-08", "2005-06", "2003-04" };
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -50,7 +50,7 @@ namespace WhipStat.Data
             {
                 Console.WriteLine($"Retrieving members for {biennium} biennium...");
                 foreach (var member in LWS.GetMembers(biennium))
-                    if (!members.Contains(member))
+                    if (!String.IsNullOrWhiteSpace(member.Party) && !members.Contains(member))
                         members.Add(member);
             }
 
@@ -301,6 +301,21 @@ namespace WhipStat.Data
             Console.WriteLine("Saving changes...\n");
             Scores.AddRange(scores);
             SaveChanges();
+        }
+
+        public void RenamePhotos(string path)
+        {
+            Console.WriteLine($"Renaming member photos...");
+            var chamber = Path.GetFileNameWithoutExtension(path);
+
+            foreach (var file in Directory.GetFiles(path))
+            {
+                var name = Path.GetFileNameWithoutExtension(file);
+                var member = Members.FirstOrDefault(i => String.Equals(i.Agency, chamber, StringComparison.OrdinalIgnoreCase) 
+                                                      && String.Equals(i.LastName, name, StringComparison.OrdinalIgnoreCase));
+                if (member != null)
+                    File.Move(file, Path.Combine(Path.GetDirectoryName(file), member.Id + ".jpg"));
+            }
         }
      }
 }
