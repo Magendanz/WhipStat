@@ -18,6 +18,7 @@ namespace DataProcessor
                 //db.GetBills();
                 //db.UpdateBillInfo();
                 //db.GetRollCalls();
+                db.ScoreBills();
                 //db.ScoreMembers();
                 //db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
             }

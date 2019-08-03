@@ -26,7 +26,8 @@ namespace WhipStat.Data
         public DbSet<Score> Scores { get; set; }
 
         //public readonly string[] biennia = { "2017-18", "2015-16" };
-        public readonly string[] biennia = { "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10", "2007-08", "2005-06", "2003-04" };
+        public readonly string[] biennia = { "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
+            "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -247,6 +248,27 @@ namespace WhipStat.Data
             SaveChanges();
         }
 
+        public void ScoreBills()
+        {
+            Console.WriteLine($"Calculating bill scores...");
+            Console.WriteLine("Preloading floor records...");
+
+            var bills = Bills.ToList();
+            var calls = RollCalls.ToList();
+
+            foreach (var bill in bills)
+            {
+                Console.WriteLine($" Scoring {bill}");
+                var votes = calls.Where(i => i.BillId == bill.BillId && i.Biennium == bill.Biennium).ToList();
+                if (votes.Count() > 0)
+                    bill.Score = votes.Average(i => i.Score);
+
+            }
+
+            Console.WriteLine("Saving changes...\n");
+            SaveChanges();
+        }
+
         public void ScoreMembers()
         {
             Console.WriteLine($"Calculating member scores...");
@@ -291,7 +313,7 @@ namespace WhipStat.Data
                         }
                         if (count > 0)
                         {
-                            var year = Convert.ToInt16(biennium.Substring(0,4));
+                            var year = Convert.ToInt16(biennium.Substring(0, 4));
                             scores.Add(new Score { MemberId = member.Id, Year = year, PolicyArea = area, Total = total, Count = count });
                         }
                     }
