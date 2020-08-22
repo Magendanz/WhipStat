@@ -375,7 +375,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2008),
                 Jurisdictions = GetJurisdictionList(),
                 From = "2007",
-                To = "2018"
+                To = "2020"
             });
         }
 
@@ -408,13 +408,13 @@ namespace WhipStat.Controllers
             var donors = DonorDb.Donors.Where(i => i.Aggregate > 10000).ToList();
             foreach (var donor in donors)
             {
-                var subtotals = DonorDb.Subtotals.Where(i => i.Donor == donor.ID && i.Jurisdiction == jurisdiction && (i.Year >= from && i.Year <= to)).ToList();
+                var subtotals = DonorDb.Subtotals.Where(i => i.DonorId == donor.Id && i.Jurisdiction == jurisdiction && (i.Year >= from && i.Year <= to)).ToList();
                 if (subtotals.Count > 0)
                 {
-                    var tallies = subtotals.Where(i => i.Donor == donor.ID).ToList();
+                    var tallies = subtotals.Where(i => i.DonorId == donor.Id).ToList();
                     var total = tallies.Sum(i => i.Total);
                     var bias = (tallies.Sum(i => i.Republican) - tallies.Sum(i => i.Democrat)) / total;
-                    var winning = (double) tallies.Sum(i => i.Wins) / tallies.Sum(i => i.Count);
+                    var winning = (double) tallies.Sum(i => i.Wins) / tallies.Sum(i => i.Campaigns);
                     points.Add(new Point { x = bias, y = total, Label = GetTooltip(donor, total, bias, winning) });
                 }
             }

@@ -7,7 +7,7 @@ namespace WhipStat.Models.PDC
     public class Donor
     {
         [Key]
-        public int ID { get; set; }
+        public int Id { get; set; }
         public string Type { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
@@ -18,7 +18,7 @@ namespace WhipStat.Models.PDC
 
         public override string ToString()
         {
-            return $"Donor #{ID} ({Name})";
+            return $"Donor #{Id} ({Name})";
         }
     }
 }

@@ -23,7 +23,7 @@ namespace WhipStat.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Tally>().HasKey(t => new { t.Donor, t.Year, t.Jurisdiction });
+            modelBuilder.Entity<Tally>().HasKey(t => new { t.DonorId, t.Year, t.Jurisdiction });
         }
 
         public string GetDonors(string party, string zips)
@@ -48,13 +48,13 @@ namespace WhipStat.Data
             var donors = Donors.Where(i => i.Aggregate > 10000).OrderByDescending(i => i.Aggregate).ToList();
             foreach (var donor in donors)
             {
-                var subtotals = Subtotals.Where(i => i.Donor == donor.ID && i.Jurisdiction == jurisdiction && (i.Year >= begin && i.Year <= end)).ToList();
+                var subtotals = Subtotals.Where(i => i.DonorId == donor.Id && i.Jurisdiction == jurisdiction && (i.Year >= begin && i.Year <= end)).ToList();
                 if (subtotals.Count > 0)
                 {
-                    var tallies = subtotals.Where(i => i.Donor == donor.ID);
+                    var tallies = subtotals.Where(i => i.DonorId == donor.Id);
                     var total = tallies.Sum(i => i.Total);
                     var bias = (tallies.Sum(i => i.Republican) - tallies.Sum(i => i.Democrat)) / total;
-                    var winning = (double) tallies.Sum(i => i.Wins) / tallies.Sum(i => i.Count);
+                    var winning = (double) tallies.Sum(i => i.Wins) / tallies.Sum(i => i.Campaigns);
 
                     sb.AppendLine($"{donor.Name}\t{subtotals.Count}\t{total:C0}\t{bias:P1}\t{winning:p1}");
                 }

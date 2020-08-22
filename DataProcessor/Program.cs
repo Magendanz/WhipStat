@@ -13,13 +13,13 @@ namespace DataProcessor
 
             using (var db = new RecordDbContext())
             {
-                db.GetMembers();
-                db.GetCommittees();
-                db.GetBills();
-                db.UpdateBillInfo();
-                db.GetRollCalls();
-                db.ScoreBills();
-                db.ScoreMembers();
+                //db.GetMembers();
+                //db.GetCommittees();
+                //db.GetBills();
+                //db.UpdateBillInfo();
+                //db.GetRollCalls();
+                //db.ScoreBills();
+                //db.ScoreMembers();
                 //db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
             }
 
@@ -43,7 +43,7 @@ namespace DataProcessor
 
             using (var db = new DonorDbContext())
             {
-                //db.GenerateAggregrates();
+                db.GenerateAggregrates();
             }
 
             using (var db = new ResultDbContext())

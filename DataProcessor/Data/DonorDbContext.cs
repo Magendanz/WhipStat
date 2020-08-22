@@ -23,7 +23,7 @@ namespace WhipStat.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Tally>().HasKey(t => new { t.Donor, t.Year, t.Jurisdiction });
+            modelBuilder.Entity<Tally>().HasKey(t => new { t.DonorId, t.Year, t.Jurisdiction });
         }
 
         public string GetDonors(string party, string zips)
@@ -43,12 +43,14 @@ namespace WhipStat.Data
 
         public void GenerateAggregrates()
         {
+            var scores = Subtotals.ToList();
+
             Console.WriteLine("Loading donor list...");
             foreach (var donor in Donors.ToList())
             {
                 Console.WriteLine($"  Analyzing '{donor.Name}'...");
-                var contributions = Subtotals.Where(i => i.Donor == donor.ID).ToList();
-                donor.Aggregate = contributions.Sum(i => i.Total);
+                var tallies = scores.Where(i => i.DonorId == donor.Id);
+                donor.Aggregate = tallies.Sum(i => i.Total);
             }
 
             // Attempt to save changes to the database
