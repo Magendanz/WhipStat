@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 
 using WhipStat.Models.LegTech;
@@ -25,7 +21,6 @@ namespace WhipStat.Data
         public DbSet<Vote> Votes { get; set; }
         public DbSet<Score> Scores { get; set; }
 
-        //public readonly string[] biennia = { "2017-18", "2015-16" };
         public readonly string[] biennia = { "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
             "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
 
@@ -44,7 +39,7 @@ namespace WhipStat.Data
         public void GetMembers()
         {
             Console.WriteLine($"Syncing member table from LWS...");
-            Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.Members");
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Members");
             var members = Members.ToList();
 
             foreach (var biennium in biennia)
@@ -63,7 +58,7 @@ namespace WhipStat.Data
         public void GetCommittees()
         {
             Console.WriteLine($"Syncing committee table from LWS...");
-            Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.Committees");
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Committees");
             var committees = Committees.ToList();
 
             foreach (var biennium in biennia)
@@ -82,7 +77,7 @@ namespace WhipStat.Data
         public void GetBills()
         {
             Console.WriteLine($"Syncing legislation from LWS...");
-            Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.Bills");
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Bills");
             var bills = Bills.ToList();
 
             foreach (var biennium in biennia)
@@ -178,8 +173,8 @@ namespace WhipStat.Data
         public void GetRollCalls()
         {
             Console.WriteLine($"Syncing roll calls from LWS...");
-            Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.RollCalls");
-            Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.Votes");
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.RollCalls");
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Votes");
             var calls = RollCalls.ToList();
             var votes = Votes.ToList();
             var members = Members.ToList();
@@ -216,6 +211,7 @@ namespace WhipStat.Data
                             }
                         }
 
+                        double score = ((RTotal > 0 ? RCount / RTotal : 0) - (DTotal > 0 ? DCount / DTotal : 0)) * 100;
                         calls.Add(new RollCall()
                         {
                             Id = id,
@@ -229,7 +225,7 @@ namespace WhipStat.Data
                             NayVotes = roll.NayVotes.Count,
                             AbsentVotes = roll.AbsentVotes.Count,
                             ExcusedVotes = roll.ExcusedVotes.Count,
-                            Score = (RCount / RTotal - DCount / DTotal) * 100
+                            Score = score
                         });
 
                         votes.AddRange(roll.Votes.Select(i => new Vote()
@@ -272,7 +268,7 @@ namespace WhipStat.Data
         public void ScoreMembers()
         {
             Console.WriteLine($"Calculating member scores...");
-            Database.ExecuteSqlCommand("TRUNCATE TABLE dbo.Scores");
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Scores");
             var scores = Scores.ToList();
 
             Console.WriteLine("Preloading voting records...");
@@ -323,6 +319,41 @@ namespace WhipStat.Data
             Console.WriteLine("Saving changes...\n");
             Scores.AddRange(scores);
             SaveChanges();
+        }
+
+        public void GetAVStats(string biennium, int billNumber)
+        {
+            var members = LWS.GetMembers(biennium);
+            var rolls = LWS.GetRollCalls(biennium, billNumber);
+
+            Console.WriteLine($"Analyzing Bill: {billNumber}");
+            var finalHouse = rolls.Where(i => i.Agency == "House").OrderByDescending(i => i.VoteDate).First();
+            Console.WriteLine($"House Final: {finalHouse.YeaVotes.Count} - {finalHouse.NayVotes.Count}");
+
+            var finalSenate = rolls.Where(i => i.Agency == "Senate").OrderByDescending(i => i.VoteDate).First();
+            Console.WriteLine($"Senate Final: {finalSenate.YeaVotes.Count} - {finalSenate.NayVotes.Count}");
+            Console.WriteLine();
+
+            var hdcYea = finalHouse.Votes.Count(i => i.VOte.StartsWith("Y") && members.First(j => j.Id == i.MemberId).Party == "D");
+            var hdcNay = finalHouse.Votes.Count(i => i.VOte.StartsWith("N") && members.First(j => j.Id == i.MemberId).Party == "D");
+            Console.WriteLine($"House Democrats: {hdcYea} - {hdcNay}");
+            var sdcYea = finalSenate.Votes.Count(i => i.VOte.StartsWith("Y") && members.First(j => j.Id == i.MemberId).Party == "D");
+            var sdcNay = finalSenate.Votes.Count(i => i.VOte.StartsWith("N") && members.First(j => j.Id == i.MemberId).Party == "D");
+            Console.WriteLine($"Senate Democrats: {sdcYea} - {sdcNay}");
+            Console.WriteLine();
+
+            var hrcYea = finalHouse.Votes.Count(i => i.VOte.StartsWith("Y") && members.First(j => j.Id == i.MemberId).Party == "R");
+            var hrcNay = finalHouse.Votes.Count(i => i.VOte.StartsWith("N") && members.First(j => j.Id == i.MemberId).Party == "R");
+            Console.WriteLine($"House Republicans: {hrcYea} - {hrcNay}");
+            var srcYea = finalSenate.Votes.Count(i => i.VOte.StartsWith("Y") && members.First(j => j.Id == i.MemberId).Party == "R");
+            var srcNay = finalSenate.Votes.Count(i => i.VOte.StartsWith("N") && members.First(j => j.Id == i.MemberId).Party == "R");
+            Console.WriteLine($"Senate Republicans: {srcYea} - {srcNay}");
+            Console.WriteLine();
+
+            Console.WriteLine($"Sen. Mullet: {finalSenate.Votes.First(i => i.Name == "Mullet").VOte}");
+            Console.WriteLine($"Rep. Ramos: {finalHouse.Votes.First(i => i.Name == "Ramos").VOte}");
+            Console.WriteLine($"Rep. Callan: {finalHouse.Votes.First(i => i.Name == "Callan").VOte}");
+            Console.WriteLine();
         }
 
         public void RenamePhotos(string path)
