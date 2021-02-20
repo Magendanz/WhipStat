@@ -5,7 +5,7 @@
     <div class="col-md-8">
         <h3>Partisan Distribution of Organizational Donors:</h3>
         <div id="Chart">
-            <div class="center-block" style="opacity:0.2; width: 40%; margin-top: 200px">
+            <div class="mx-auto" style="opacity:0.2; width: 40%; margin-top: 200px;">
                 <img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
             </div>
         </div>
@@ -16,30 +16,31 @@
             <form asp-controller="Projects" asp-action="OrgDonors" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
                 <ul class="list-group">
                     <li class="list-group-item">
-                        <h4 class="list-group-item-heading">Jurisdication Type:</h4>
+                        <h5 class="list-group-item-heading">Jurisdication Type:</h5>
                         <select asp-for="Jurisdiction" asp-items="Model.Jurisdictions"></select>
                     </li>
                     <li class="list-group-item">
-                        <h4 class="list-group-item-heading">Date Range:</h4>
+                        <h5 class="list-group-item-heading">Date Range:</h5>
                         <select asp-for="From" asp-items="Model.OddYears"></select> to
                         <select asp-for="To" asp-items="Model.EvenYears"></select>
                     </li>
-                    <li class="list-group-item" id="Submit" style="display:none">
-                        <div class="list-group-item-text">
-                            <button class="btn center-block" type="submit" id="Download">
-                                <span class="glyphicon glyphicon-cloud-download"></span> Download
+                    <li class="list-group-item" id="Submit" style="display:none;">
+                        <div class="list-group-item-text text-center">
+                            <button class="btn btn-primary" type="submit" id="Download">
+                                <img src="~/images/cloud-download.svg" width="16" height="16"> Download
                             </button>
                         </div>
                     </li>
-                    <li class="list-group-item" id="Loading" style="opacity:0.5">
+                    <li class="list-group-item" id="Loading" style="opacity:0.5;">
                         <div class="list-group-item-text">
-                            <div class="progress center-block" style="width: 40%; margin-top: 7px; margin-bottom: 7px">
-                                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%">Loading...</div>
+                            <div class="progress mx-auto" style="width: 50%; height: 32px;">
+                                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%; height: 32px;">Loading...</div>
                             </div>
                         </div>
                     </li>
                 </ul>
             </form>
+            <br>
         </section>
         <section>
             <h3>Methodology:</h3>

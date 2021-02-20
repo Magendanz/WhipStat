@@ -21,7 +21,7 @@ namespace WhipStat.Models.LWS
         [DataMember(Order = 5)]
         public string Phone { get; set; }
 
-        public override string ToString() => LongName;
+        public override string ToString() => Name;
         public override bool Equals(Object obj) => Id == ((Committee)obj).Id;
         public override int GetHashCode() => Id;
     }

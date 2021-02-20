@@ -1,6 +1,6 @@
 using System;
 
-namespace WebApplication.Models
+namespace WhipWeb.Models
 {
     public class ErrorViewModel
     {

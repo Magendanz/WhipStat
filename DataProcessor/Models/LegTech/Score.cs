@@ -14,10 +14,8 @@ namespace WhipStat.Models.LegTech
 
         public override string ToString()
             => $"Score #{MemberId} for Policy Area #{PolicyArea} in {Year}";
-
         public override bool Equals(Object obj)
             => (MemberId == ((Score)obj).MemberId) && (Year == ((Score)obj).Year) && (PolicyArea == ((Score)obj).PolicyArea);
-
         public override int GetHashCode()
             => (MemberId << 16) ^ (Year << 8) ^ PolicyArea;
     }

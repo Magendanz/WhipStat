@@ -1,7 +1,6 @@
 ﻿using System;
-using System.IO;
-using WhipStat.Data;
-using WhipStat.Services;
+
+using WhipStat.DataAccess;
 
 namespace DataProcessor
 {
@@ -20,30 +19,18 @@ namespace DataProcessor
                 //db.GetRollCalls();
                 //db.ScoreBills();
                 //db.ScoreMembers();
+                //db.GetTestimony(2014, 2021);
                 //db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
             }
 
             using (var db = new RecordDbContext())
             {
-                //db.GetAVStats("2019-20", 1087);
-                //db.GetAVStats("2019-20", 1324);
-                //db.GetAVStats("2019-20", 1652);
-                //db.GetAVStats("2019-20", 1873);
-                //db.GetAVStats("2019-20", 2158);
-                //db.GetAVStats("2019-20", 2167);
-                //db.GetAVStats("2019-20", 5581);
-                //db.GetAVStats("2019-20", 5993);
-                //db.GetAVStats("2019-20", 5997);
-                //db.GetAVStats("2019-20", 5998);
-                //db.GetAVStats("2019-20", 6004);
-                //db.GetAVStats("2019-20", 6016);
-                //db.GetAVStats("2019-20", 8200);
-                //db.GetAVStats("2019-20", 1000);
+                //db.GetAVStats("2019-20", 5395, 5323, 5628, 6492, 6690, 8212);
             }
 
             using (var db = new DonorDbContext())
             {
-                db.GenerateAggregrates();
+                //db.GenerateAggregrates();
             }
 
             using (var db = new ResultDbContext())

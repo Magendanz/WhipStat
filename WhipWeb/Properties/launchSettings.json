@@ -3,7 +3,7 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:54522/",
+      "applicationUrl": "http://localhost:32637",
       "sslPort": 0
     }
   },
@@ -15,13 +15,14 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "WhipStat": {
+    "WhipWeb": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:54523"
+      "dotnetRunMessages": "true",
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
     }
   }
 }

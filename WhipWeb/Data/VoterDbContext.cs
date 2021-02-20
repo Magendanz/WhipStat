@@ -21,9 +21,9 @@ namespace WhipStat.Data
 
         public Dictionary<int, string> GetPrecincts(int district)
         {
-            return Districts.Where(d => d.DistrictType == "Legislative" && GetValue(d.DistrictCode) == district)
-                .GroupBy(d => d.PrecinctCode)
-                .ToDictionary(g => g.Key, g => g.First().PrecinctName);
+            return Districts.Where(d => d.DistrictType == "Legislative").AsEnumerable()
+                .Where(d => GetValue(d.DistrictCode) == district)
+                .GroupBy(d => d.PrecinctCode).ToDictionary(g => g.Key, g => g.First().PrecinctName);
         }
 
         public string GetVoters(int district, int precinct)

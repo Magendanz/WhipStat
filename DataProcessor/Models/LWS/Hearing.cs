@@ -12,7 +12,7 @@ namespace WhipStat.Models.LWS
         [DataMember(IsRequired = true, Order = 1)]
         public string Biennium { get; set; }
         [DataMember(IsRequired = true, Order = 2)]
-        public Meeting CommitteeMeeting { get; set; }
+        public CommitteeMeeting CommitteeMeeting { get; set; }
         [DataMember(Order = 3)]
         public string HearingType { get; set; }
         [DataMember(Order = 4)]
@@ -23,7 +23,7 @@ namespace WhipStat.Models.LWS
     }
 
     [DataContract(Namespace = "http://WSLWebServices.leg.wa.gov/")]
-    public class Meeting
+    public class CommitteeMeeting
     {
         [DataMember(IsRequired = true, Order = 0)]
         public int AgendaId { get; set; }
@@ -55,5 +55,9 @@ namespace WhipStat.Models.LWS
         public string CommitteeType { get; set; }
         [DataMember(Order = 14)]
         public string Notes { get; set; }
+
+        public override string ToString() => $"{Agency} Meeting #{AgendaId}";
+        public override int GetHashCode() => ToString().GetHashCode();
+
     }
 }
