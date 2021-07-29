@@ -38,7 +38,7 @@ namespace WhipStat.DataAccess
             modelBuilder.Entity<Bill>().HasKey(t => new { t.BillId, t.Biennium });
             modelBuilder.Entity<Vote>().HasKey(t => new { t.RollCallId, t.MemberId });
             modelBuilder.Entity<Score>().HasKey(t => new { t.MemberId, t.Year, t.PolicyArea });
-            modelBuilder.Entity<Testimony>().HasKey(t => new { t.LastName, t.FirstName, t.TimeOfSignIn });
+            modelBuilder.Entity<Testimony>().HasKey(t => new { t.LastName, t.FirstName, t.TimeSignedIn });
         }
 
         public void GetMembers()
@@ -349,15 +349,15 @@ namespace WhipStat.DataAccess
                                     City = t.City.Truncate(32),
                                     State = t.State.Truncate(2),
                                     Zip = t.Zip.Truncate(10),
-                                    EmailAddress = t.EmailAddress.Truncate(64),
-                                    PhoneNumber = t.PhoneNumber.Truncate(16),
+                                    Email = t.EmailAddress.Truncate(64),
+                                    Phone = t.PhoneNumber.Truncate(16),
                                     BillId = i.BillId.Truncate(16),
                                     Position = t.Position.Truncate(16),
-                                    IsSpeaking = t.IsSpeaking,
+                                    Testify = t.IsSpeaking,
                                     OutOfTown = t.OutOfTown,
                                     CalledUp = t.CalledUp,
                                     NoShow = t.NoShow,
-                                    TimeOfSignIn = t.TimeOfSignIn
+                                    TimeSignedIn = t.TimeOfSignIn
                                 });
                     }
                     catch { }
@@ -386,18 +386,18 @@ namespace WhipStat.DataAccess
                     City = row["City"].ToTitleCase().Truncate(32),
                     State = row["State"].ToUpperInvariant().Truncate(2),
                     Zip = row["Zip"].Truncate(10),
-                    EmailAddress = row["Email"].ToLowerInvariant().Truncate(64),
-                    PhoneNumber = row["Phone"].ToNumeric().Truncate(16),
+                    Email = row["Email"].ToLowerInvariant().Truncate(64),
+                    Phone = row["Phone"].ToNumeric().Truncate(16),
                     BillId = row["BillId"].ToUpperInvariant().Truncate(16),
                     Position = row["Position"].ToTitleCase().Truncate(16),
-                    IsSpeaking = row["Testify"] == "Yes",
+                    Testify = row["Testify"] == "Yes",
                     OutOfTown = row["OutOfTown"] == "Yes",
                     CalledUp = row["CalledUp"] == "Yes",
                     NoShow = row["NoShow"] == "Yes",
-                    TimeOfSignIn = DateTime.Parse(row["TimeSignedIn"])
+                    TimeSignedIn = DateTime.Parse(row["TimeSignedIn"])
                 };
                 while (!test.Add(record))
-                    record.TimeOfSignIn = record.TimeOfSignIn.AddSeconds(1);
+                    record.TimeSignedIn = record.TimeSignedIn.AddSeconds(1);
 
                 ReportProgress((double)++i / count);
             }

@@ -11,20 +11,20 @@ namespace WhipStat.Models.LegTech
         public string City { get; set; }
         public string State { get; set; }
         public string Zip { get; set; }
-        public string EmailAddress { get; set; }
-        public string PhoneNumber { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
         public string BillId { get; set; }
         public string Position { get; set; }
-        public bool IsSpeaking { get; set; }
+        public bool Testify { get; set; }
         public bool OutOfTown { get; set; }
         public bool CalledUp { get; set; }
         public bool NoShow { get; set; }
-        public DateTime TimeOfSignIn { get; set; }
+        public DateTime TimeSignedIn { get; set; }
 
         public override string ToString() => $"{LastName}, {FirstName}";
         public override bool Equals(Object obj)
-            => obj is Testimony t && (LastName, FirstName, TimeOfSignIn).Equals((t.LastName, t.FirstName, t.TimeOfSignIn));
+            => obj is Testimony t && (LastName, FirstName, TimeSignedIn).Equals((t.LastName, t.FirstName, t.TimeSignedIn));
         public override int GetHashCode()
-            => (LastName, FirstName, TimeOfSignIn).GetHashCode();
+            => (LastName, FirstName, TimeSignedIn).GetHashCode();
     }
 }
