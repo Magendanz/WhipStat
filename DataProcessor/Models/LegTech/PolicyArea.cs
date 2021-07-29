@@ -16,8 +16,8 @@ namespace WhipStat.Models.LegTech
         public override string ToString()
             => Name;
         public override bool Equals(Object obj)
-            => (Id == ((PolicyArea)obj).Id) && (Name == ((PolicyArea)obj).Name);
+            => obj is PolicyArea p && (Id, Name).Equals((p.Id, p.Name));
         public override int GetHashCode()
-            => Id ^ Name.GetHashCode();
+            => (Id, Name).GetHashCode();
     }
 }

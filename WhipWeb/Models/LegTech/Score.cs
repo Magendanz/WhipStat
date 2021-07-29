@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace WhipStat.Models.LegTech
 {
@@ -14,11 +12,9 @@ namespace WhipStat.Models.LegTech
 
         public override string ToString()
             => $"Score #{MemberId} for Policy Area #{PolicyArea} in {Year}";
-
         public override bool Equals(Object obj)
-            => (MemberId == ((Score)obj).MemberId) && (Year == ((Score)obj).Year) && (PolicyArea == ((Score)obj).PolicyArea);
-
+            => obj is Score s &&  (MemberId, Year, PolicyArea).Equals((s.MemberId, s.Year, s.PolicyArea));
         public override int GetHashCode()
-            => (MemberId << 16) ^ (Year << 8) ^ PolicyArea;
+            => (MemberId, Year, PolicyArea).GetHashCode();
     }
 }

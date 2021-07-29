@@ -1,57 +1,72 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace WhipStat.Helpers
 {
+    /// <summary>
+    /// String utility library
+    /// </summary>
     public static class StringExtensions
     {
+        static readonly TextInfo ti = CultureInfo.CurrentCulture.TextInfo;  // Improve performance by calling TextInfo string methods
+
+        public static double KeywordMatch(this string strA, string strB)
+            => strA.KeywordMatch(strB.Split());
+
+        public static double KeywordMatch(this string str, string[] keywords)
+            => str.Split().KeywordMatch(keywords);
+
+        public static double KeywordMatch(this string[] words, string[] keywords)
+        {
+            var len = Math.Min(words.Length, keywords.Length);
+            return len > 0 ? (double)words.Count(i => keywords.Contains(i)) / len : 0d;
+        }
+
         public static bool WildcardMatch(this string str, string pattern)
             => Regex.IsMatch(str, WildCardToRegular(pattern));
 
         private static string WildCardToRegular(string str)
             => "^" + Regex.Escape(str).Replace("\\?", ".").Replace("\\*", ".*") + "$";
 
+        private static string WildCardToSQL(string str)
+            => str.Replace('*', '%').Replace('?', '_').Replace('!', '^');
+
         public static string Index(this string[] array, int index)
-           => index >= 0 && index < array.Count() ? array[index] : array[0];
+            => index >= 0 && index < array.Length ? array[index] : array[0];
 
         public static string Join(string separator, params string[] args)
-            => String.Join(separator, args.Where(i => !String.IsNullOrWhiteSpace(i)).ToArray());
+            => String.Join(separator, args.Where(i => !string.IsNullOrWhiteSpace(i)).ToArray());
 
         public static string Truncate(this string str, int maxLength)
-        {
-            if (String.IsNullOrWhiteSpace(str))
-                return null;
-
-            var s = str.Trim();
-            return s.Length <= maxLength ? s : s.Substring(0, maxLength);
-        }
+            => string.IsNullOrEmpty(str) ? null : str.Length <= maxLength ? str : str[..maxLength];
 
         public static bool Contains(this string str, string value, StringComparison comparisonType)
             => str.IndexOf(value, comparisonType) >= 0;
 
         public static string ToTitleCase(this string str)
-            => Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(str.ToLower());
+            => string.IsNullOrWhiteSpace(str) ? str : ti.ToTitleCase(ti.ToLower(str));
 
         public static string ToSentenceCase(this string str)
-            => String.IsNullOrWhiteSpace(str) ? str : str.First().ToString().ToUpper() + str.Substring(1).ToLower();
+            => string.IsNullOrWhiteSpace(str) ? str : ti.ToUpper(str[0]) + ti.ToLower(str[1..]);
 
         public static string ToAlphaNumeric(this string str)
-            => Regex.Replace(str, "[^a-zA-Z0-9 ]", String.Empty);
+            => Regex.Replace(str, "[^a-zA-Z0-9 ]", string.Empty);
 
         public static string ToNumeric(this string str)
-            => Regex.Replace(str, "[^0-9]", String.Empty);
+            => Regex.Replace(str, @"\D", string.Empty);
+
+        public static bool IsValidEmail(this string str)
+            => Regex.IsMatch(str, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
 
         public static string ToZipCode(this string str)
         {
-            if (!String.IsNullOrEmpty(str))
+            if (!string.IsNullOrEmpty(str))
             {
                 // Strip out non-digits
                 str = str.ToNumeric();
-                if (UInt64.TryParse(str, out UInt64 num))
+                if (ulong.TryParse(str, out var num))
                 {
                     if (str.Length <= 5)
                         return num.ToString("D5");
@@ -65,11 +80,11 @@ namespace WhipStat.Helpers
 
         public static string ToPhoneNumber(this string str)
         {
-            if (!String.IsNullOrEmpty(str))
+            if (!string.IsNullOrEmpty(str))
             {
                 // Strip out non-digits
                 str = str.ToNumeric();
-                if (UInt64.TryParse(str, out UInt64 num))
+                if (ulong.TryParse(str, out var num))
                 {
                     if (str.Length == 7)
                         return num.ToString("###-####");
@@ -83,7 +98,12 @@ namespace WhipStat.Helpers
             return str;
         }
 
-        public static bool IsValidEmail(this string str)
-            => Regex.IsMatch(str, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+        public static string ToIndexedName(this string str, int i = -1)
+        {
+            var words = str.Trim().Split();
+            if (i < 0)
+                i += words.Length;
+            return i < words.Length ? words[i].ToTitleCase() : null;
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace WhipStat.Models.LegTech
 {
@@ -24,8 +23,8 @@ namespace WhipStat.Models.LegTech
 
         public override string ToString() => $"{LastName}, {FirstName}";
         public override bool Equals(Object obj)
-            => (LastName == ((Testimony)obj).LastName) && (FirstName == ((Testimony)obj).FirstName) && (TimeOfSignIn == ((Testimony)obj).TimeOfSignIn);
+            => obj is Testimony t && (LastName, FirstName, TimeOfSignIn).Equals((t.LastName, t.FirstName, t.TimeOfSignIn));
         public override int GetHashCode()
-            => ToString().GetHashCode() ^ TimeOfSignIn.GetHashCode();
+            => (LastName, FirstName, TimeOfSignIn).GetHashCode();
     }
 }

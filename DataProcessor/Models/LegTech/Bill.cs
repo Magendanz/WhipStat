@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace WhipStat.Models.LegTech
 {
@@ -19,9 +17,9 @@ namespace WhipStat.Models.LegTech
             => $"{BillId} ({Biennium})";
 
         public override bool Equals(Object obj)
-            => (BillId == ((Bill)obj).BillId) && (Biennium == ((Bill)obj).Biennium);
+            => obj is Bill b && (BillId, Biennium).Equals((b.BillId, b.Biennium));
 
         public override int GetHashCode()
-            => ToString().GetHashCode();
+            => (BillId, Biennium).GetHashCode();
     }
 }

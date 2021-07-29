@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+
+using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
 using WhipStat.Helpers;
@@ -366,6 +368,44 @@ namespace WhipStat.DataAccess
                 SaveChanges();
             }
         }
+        public void ImportTestimony(string path)
+        {
+            var test = new HashSet<Testimony>();
+            var table = DataTable.New.ReadCsv(path);
+            int count = table.NumRows, i = 0;
+
+            Console.Write($"Importing CSV...");
+            foreach (var row in table.Rows)
+            {
+                var record = new Testimony
+                {
+                    LastName = row["LastName"].ToTitleCase().Truncate(64),
+                    FirstName = row["FirstName"].ToTitleCase().Truncate(64),
+                    Organization = row["Organization"].ToTitleCase().Truncate(256),
+                    Street = row["Street"].ToTitleCase().Truncate(64),
+                    City = row["City"].ToTitleCase().Truncate(32),
+                    State = row["State"].ToUpperInvariant().Truncate(2),
+                    Zip = row["Zip"].Truncate(10),
+                    EmailAddress = row["Email"].ToLowerInvariant().Truncate(64),
+                    PhoneNumber = row["Phone"].ToNumeric().Truncate(16),
+                    BillId = row["BillId"].ToUpperInvariant().Truncate(16),
+                    Position = row["Position"].ToTitleCase().Truncate(16),
+                    IsSpeaking = row["Testify"] == "Yes",
+                    OutOfTown = row["OutOfTown"] == "Yes",
+                    CalledUp = row["CalledUp"] == "Yes",
+                    NoShow = row["NoShow"] == "Yes",
+                    TimeOfSignIn = DateTime.Parse(row["TimeSignedIn"])
+                };
+                while (!test.Add(record))
+                    record.TimeOfSignIn = record.TimeOfSignIn.AddSeconds(1);
+
+                ReportProgress((double)++i / count);
+            }
+
+            Console.WriteLine("\nSaving changes...\n");
+            Testimonies.AddRange(test);
+            SaveChanges();
+        }
 
         public void GetAVStats(string biennium, params int[] bills)
         {
@@ -418,6 +458,14 @@ namespace WhipStat.DataAccess
                 if (member != null)
                     File.Move(file, Path.Combine(Path.GetDirectoryName(file), member.Id + ".jpg"));
             }
+        }
+        private void ReportProgress(double complete)
+        {
+            const int padding = 8;
+
+            Console.CursorVisible = false;
+            var str = $"{complete:P1}".PadLeft(padding);
+            Console.Write(str + new string('\b', padding));
         }
     }
 }

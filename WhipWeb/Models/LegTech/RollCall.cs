@@ -22,10 +22,8 @@ namespace WhipStat.Models.LegTech
 
         public override string ToString()
             => $"Roll Call #{Id}";
-
         public override bool Equals(Object obj)
             => Id == ((RollCall)obj).Id;
-
         public override int GetHashCode()
             => Id;
     }
