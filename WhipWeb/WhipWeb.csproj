@@ -35,4 +35,6 @@
     </Content>
   </ItemGroup>
 
+  <Import Project="..\Models\Models.projitems" Label="Shared" />
+
 </Project>

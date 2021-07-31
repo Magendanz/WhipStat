@@ -13,4 +13,6 @@
     <PackageReference Include="System.Runtime.Serialization.Xml" Version="4.3.0" />
   </ItemGroup>
 
+  <Import Project="..\Models\Models.projitems" Label="Shared" />
+
 </Project>

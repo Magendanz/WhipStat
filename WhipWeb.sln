@@ -7,7 +7,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhipWeb", "WhipWeb\WhipWeb.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataProcessor", "DataProcessor\DataProcessor.csproj", "{A55B3D25-C68B-4325-AEE8-28C2F9346E68}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Models", "Models\Models.shproj", "{89662E70-83B4-41B7-8D78-63BCF22FBA8E}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Models\Models.projitems*{802ee8cc-ed4f-4220-a43a-559bfa20f8f8}*SharedItemsImports = 5
+		Models\Models.projitems*{89662e70-83b4-41b7-8d78-63bcf22fba8e}*SharedItemsImports = 13
+		Models\Models.projitems*{a55b3d25-c68b-4325-aee8-28c2f9346e68}*SharedItemsImports = 5
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

@@ -231,7 +231,8 @@ namespace WhipStat.Controllers
                 OddYears = GetYearList(2003, 2),
                 EvenYears = GetYearList(2004, 2),
                 Chambers = GetChamberList(),
-                To = "2020"
+                From = "2013",
+                To = "2022"
             });
         }
 
@@ -375,7 +376,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2008),
                 Jurisdictions = GetJurisdictionList(),
                 From = "2007",
-                To = "2020"
+                To = "2022"
             });
         }
 

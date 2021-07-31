@@ -7,6 +7,7 @@ using System.Text;
 
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 using WhipStat.Helpers;
 using WhipStat.Models.LegTech;
@@ -25,7 +26,7 @@ namespace WhipStat.DataAccess
         public DbSet<Score> Scores { get; set; }
         public DbSet<Testimony> Testimonies { get; set; }
 
-        public readonly string[] biennia = { "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
+        public readonly string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
             "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -81,10 +82,10 @@ namespace WhipStat.DataAccess
 
         public void GetBills()
         {
-            Console.WriteLine($"Syncing legislation from LWS...");
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Bills");
             var bills = new HashSet<Bill>();
 
+            Console.WriteLine($"Syncing legislation from LWS...");
             foreach (var biennium in biennia)
             {
                 Console.WriteLine($"Retrieving bills for {biennium} biennium...");
@@ -107,16 +108,17 @@ namespace WhipStat.DataAccess
 
         public void UpdateBillInfo()
         {
-            Console.WriteLine($"Updating bill info...");
+            Console.Write($"Updating bill info...");
             var areas = PolicyAreas.ToList();
+            var bills = Bills.ToList();
+            int count = bills.Count, i = 0;
 
-            foreach (var bill in Bills.ToList())
+            foreach (var bill in bills)
             {
-                Console.WriteLine($"  {bill}");
                 try
                 {
                     bill.AbbrTitle = GetTitle(bill);
-                    //bill.Sponsors = GetSponsors(bill);        // We're currently not using this
+                    bill.Sponsors = GetSponsors(bill);
                     bill.Committees = GetCommittees(bill);
                     bill.PolicyArea = GetBestPolicyArea(bill, areas)?.Id;
                 }
@@ -124,13 +126,12 @@ namespace WhipStat.DataAccess
                 {
                     Debug.WriteLine($"Update failed for bill {bill}!  Exception: {ex.Message}");
                 }
-                finally
-                {
-                    Bills.Update(bill);
-                }
+
+                Bills.Update(bill);
+                ReportProgress((double)++i / count);
             }
 
-            Console.WriteLine("Saving changes...\n");
+            Console.WriteLine("\nSaving changes...\n");
             SaveChanges();
         }
 
@@ -162,7 +163,7 @@ namespace WhipStat.DataAccess
                     if (committees.Contains(committee))
                         ++score;
                 foreach (var keyword in area.Keywords.Split(','))
-                    if (bill.AbbrTitle.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (bill.AbbrTitle?.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
                         ++score;
                 if (score > bestScore)
                 {
@@ -176,16 +177,18 @@ namespace WhipStat.DataAccess
 
         public void GetRollCalls()
         {
-            Console.WriteLine($"Syncing roll calls from LWS...");
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.RollCalls");
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Votes");
-            var calls = new HashSet<RollCall>();
-            var votes = Votes.ToList();
-            var members = Members.ToList();
 
-            foreach (var bill in Bills.ToList())
+            var calls = new HashSet<RollCall>();
+            var votes = Votes.ToHashSet();
+            var members = Members.ToList();
+            var bills = Bills.ToList();
+            int count = bills.Count, i = 0;
+
+            Console.Write($"Syncing roll calls from LWS...");
+            foreach (var bill in bills)
             {
-                Console.WriteLine($"  {bill}");
                 foreach (var roll in LwsAccess.GetRollCalls(bill.Biennium, bill.BillNumber))
                 {
                     var id = roll.GetHashCode();
@@ -231,16 +234,20 @@ namespace WhipStat.DataAccess
                         Score = score
                     });
 
-                    votes.AddRange(roll.Votes.Select(i => new Vote()
+                    foreach (var vote in roll.Votes)
                     {
-                        RollCallId = id,
-                        MemberId = i.MemberId,
-                        MemberVote = i.VOte.Substring(0, 1).ToUpper()
-                    }));
+                        votes.Add(new Vote()
+                        {
+                            RollCallId = id,
+                            MemberId = vote.MemberId,
+                            MemberVote = vote.VOte[0..1].ToUpperInvariant()
+                        });
+                    }
                 }
+                ReportProgress((double)++i / count);
             }
 
-            Console.WriteLine("Saving changes...\n");
+            Console.WriteLine("\nSaving changes...\n");
             RollCalls.AddRange(calls);
             Votes.AddRange(votes);
             SaveChanges();
@@ -248,77 +255,75 @@ namespace WhipStat.DataAccess
 
         public void ScoreBills()
         {
-            Console.WriteLine($"Calculating bill scores...");
             Console.WriteLine("Preloading floor records...");
 
             var bills = Bills.ToList();
             var calls = RollCalls.ToList();
+            int count = bills.Count, i = 0;
 
+            Console.Write($"Calculating bill scores...");
             foreach (var bill in bills)
             {
-                Console.WriteLine($" Scoring {bill}");
                 var votes = calls.Where(i => i.BillId == bill.BillId && i.Biennium == bill.Biennium).ToList();
                 if (votes.Count() > 0)
                     bill.Score = votes.Average(i => i.Score);
 
+                ReportProgress((double)++i / count);
             }
 
-            Console.WriteLine("Saving changes...\n");
+            Console.WriteLine("\nSaving changes...\n");
             SaveChanges();
         }
 
         public void ScoreMembers()
         {
-            Console.WriteLine($"Calculating member scores...");
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Scores");
             var scores = new HashSet<Score>();
+            var members = Members.ToList();
+            int count = members.Count * biennia.Count(), i = 0;
 
-            Console.WriteLine("Preloading voting records...");
-            var bills = Bills.ToList();
-            var calls = RollCalls.ToList();
-
-            foreach (var member in Members.OrderBy(i => i.LastName).ToList())
+            Console.Write($"Calculating member scores...");
+            foreach (var biennium in biennia)
             {
-                Console.WriteLine($" Scoring {member}");
-                var votes = Votes.Where(i => i.MemberId == member.Id).ToList();
+                var year = Convert.ToInt16(biennium[0..4]);
 
-                foreach (var biennium in biennia)
+                foreach (var member in members)
                 {
+                    var votes = from v in Votes
+                                join r in RollCalls on v.RollCallId equals r.Id
+                                join b in Bills on r.BillId equals b.BillId
+                                where v.MemberId == member.Id && r.Biennium == biennium
+                                select new { v.MemberVote, r.Score.Value, b.PolicyArea };
+                    
                     for (short area = 0; area <= PolicyAreas.Count(); ++area)
                     {
-                        var tb = bills.Where(i => i.Biennium == biennium && (area == 0 || i.PolicyArea == area)).ToList();
-                        var tc = calls.Where(i => tb.Exists(j => i.BillId == j.BillId && i.Biennium == j.Biennium)).ToList();
-
-                        double total = 0;
-                        int count = 0;
-                        foreach (var vote in votes)
+                        double t = 0;
+                        int c = 0;
+                        foreach (var vote in votes.ToList())
                         {
-                            var call = tc.FirstOrDefault(i => i.Id == vote.RollCallId);
-                            if (call != null)
+                            if (area == 0 || vote.PolicyArea == area)
                             {
                                 switch (vote.MemberVote)
                                 {
                                     case "Y":
-                                        total += call.Score.Value;
-                                        ++count;
+                                        t += vote.Value;
+                                        ++c;
                                         break;
                                     case "N":
-                                        total -= call.Score.Value;
-                                        ++count;
+                                        t -= vote.Value;
+                                        ++c;
                                         break;
                                 }
                             }
                         }
-                        if (count > 0)
-                        {
-                            var year = Convert.ToInt16(biennium.Substring(0, 4));
-                            scores.Add(new Score { MemberId = member.Id, Year = year, PolicyArea = area, Total = total, Count = count });
-                        }
+                        if (c > 0)
+                            scores.Add(new Score { MemberId = member.Id, Year = year, PolicyArea = area, Total = t, Count = c });
                     }
+                    ReportProgress((double)++i / count);
                 }
             }
 
-            Console.WriteLine("Saving changes...\n");
+            Console.WriteLine("\nSaving changes...\n");
             Scores.AddRange(scores);
             SaveChanges();
         }
