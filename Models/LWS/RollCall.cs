@@ -35,7 +35,14 @@ namespace WhipStat.Models.LWS
         public override bool Equals(Object obj)
             => obj is RollCall r && (VoteDate, Agency, SequenceNumber).Equals((r.VoteDate, r.Agency, r.SequenceNumber));
         public override int GetHashCode()
-            => (VoteDate, Agency, SequenceNumber).GetHashCode();
+        {
+            DateTime StartDate = new DateTime(1991, 1, 1);   // Information only available back to 1991
+            string[] Agencies = { "Senate", "House" };
+
+            var days = (int)(VoteDate - StartDate).TotalDays;
+            var agency = Array.IndexOf(Agencies, Agency);
+            return (days << 14) + (agency << 10) + SequenceNumber;
+        }
     }
 
     [DataContract(Namespace = "http://WSLWebServices.leg.wa.gov/")]

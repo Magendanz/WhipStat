@@ -8,9 +8,10 @@ namespace WhipStat.Models.LegTech
     {
         [Key]
         public int Id { get; set; }
-        public string Agency { get; set; }
+        public int BillNumber { get; set; }
         public string BillId { get; set; }
         public string Biennium { get; set; }
+        public string Agency { get; set; }
         public string Motion { get; set; }
         public short SequenceNumber { get; set; }
         public DateTime VoteDate { get; set; }

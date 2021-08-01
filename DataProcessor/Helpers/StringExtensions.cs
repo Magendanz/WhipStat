@@ -52,10 +52,10 @@ namespace WhipStat.Helpers
             => string.IsNullOrWhiteSpace(str) ? str : ti.ToUpper(str[0]) + ti.ToLower(str[1..]);
 
         public static string ToAlphaNumeric(this string str)
-            => Regex.Replace(str, "[^a-zA-Z0-9 ]", string.Empty);
+            => new string(str.Where(char.IsLetterOrDigit).ToArray());
 
         public static string ToNumeric(this string str)
-            => Regex.Replace(str, @"\D", string.Empty);
+            => new string(str.Where(char.IsDigit).ToArray());
 
         public static bool IsValidEmail(this string str)
             => Regex.IsMatch(str, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");

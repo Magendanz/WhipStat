@@ -16,8 +16,8 @@ namespace WhipStat.Models.LegTech
         public override string ToString()
             => $"{BillId} ({Biennium})";
         public override bool Equals(Object obj)
-            => obj is Bill b && (BillId, Biennium).Equals((b.BillId, b.Biennium));
+            => obj is Bill b && (BillNumber, Biennium).Equals((b.BillNumber, b.Biennium));
         public override int GetHashCode()
-            => (BillId, Biennium).GetHashCode();
+            => (BillNumber, Biennium).GetHashCode();
     }
 }

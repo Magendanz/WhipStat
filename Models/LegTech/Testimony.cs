@@ -7,13 +7,19 @@ namespace WhipStat.Models.LegTech
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Organization { get; set; }
+        public int OrgId { get; set; }
         public string Street { get; set; }
         public string City { get; set; }
         public string State { get; set; }
         public string Zip { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
+        public string Biennium { get; set; }
+        public string CommitteeName { get; set; }
+        public string Agency { get; set; }
+        public string AgendaItem { get; set; }
         public string BillId { get; set; }
+        public int BillNumber { get; set; }
         public string Position { get; set; }
         public bool Testify { get; set; }
         public bool OutOfTown { get; set; }

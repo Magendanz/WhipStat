@@ -52,7 +52,7 @@ namespace WhipStat.DataAccess
             {
                 Console.WriteLine($"Retrieving members for {biennium} biennium...");
                 foreach (var member in LwsAccess.GetMembers(biennium))
-                    if (!String.IsNullOrWhiteSpace(member.Party) && !members.Contains(member))
+                    if (!String.IsNullOrWhiteSpace(member.Party))
                         members.Add(member);
             }
 
@@ -191,8 +191,6 @@ namespace WhipStat.DataAccess
             {
                 foreach (var roll in LwsAccess.GetRollCalls(bill.Biennium, bill.BillNumber))
                 {
-                    var id = roll.GetHashCode();
-
                     // Roll call score is the percentage difference between Republican and Democrat support
                     double RTotal = 0, DTotal = 0, RCount = 0, DCount = 0;
                     foreach (var vote in roll.Votes)
@@ -217,13 +215,16 @@ namespace WhipStat.DataAccess
                         }
                     }
 
+                    var id = roll.GetHashCode();
+                    int.TryParse(roll.BillId.ToNumeric(), out int billNumber);
                     double score = ((RTotal > 0 ? RCount / RTotal : 0) - (DTotal > 0 ? DCount / DTotal : 0)) * 100;
                     calls.Add(new RollCall()
                     {
                         Id = id,
-                        Agency = roll.Agency,
+                        BillNumber = billNumber,
                         BillId = roll.BillId,
                         Biennium = roll.Biennium,
+                        Agency = roll.Agency,
                         Motion = roll.Motion,
                         SequenceNumber = roll.SequenceNumber,
                         VoteDate = roll.VoteDate,
@@ -291,7 +292,7 @@ namespace WhipStat.DataAccess
                 {
                     var votes = from v in Votes
                                 join r in RollCalls on v.RollCallId equals r.Id
-                                join b in Bills on r.BillId equals b.BillId
+                                join b in Bills on r.BillNumber equals b.BillNumber
                                 where v.MemberId == member.Id && r.Biennium == biennium
                                 select new { v.MemberVote, r.Score.Value, b.PolicyArea };
                     
