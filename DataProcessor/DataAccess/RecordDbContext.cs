@@ -216,12 +216,11 @@ namespace WhipStat.DataAccess
                     }
 
                     var id = roll.GetHashCode();
-                    int.TryParse(roll.BillId.ToNumeric(), out int billNumber);
                     double score = ((RTotal > 0 ? RCount / RTotal : 0) - (DTotal > 0 ? DCount / DTotal : 0)) * 100;
                     calls.Add(new RollCall()
                     {
                         Id = id,
-                        BillNumber = billNumber,
+                        BillNumber = int.Parse(roll.BillId[^4..]),      // Last four chars should be number
                         BillId = roll.BillId,
                         Biennium = roll.Biennium,
                         Agency = roll.Agency,
