@@ -39,11 +39,11 @@ namespace WhipStat.Helpers
         public static string Join(string separator, params string[] args)
             => String.Join(separator, args.Where(i => !string.IsNullOrWhiteSpace(i)).ToArray());
 
+        public static string Trim(this string str, int maxLength)
+            => string.IsNullOrEmpty(str) ? null : str.Trim().Truncate(maxLength);
+
         public static string Truncate(this string str, int maxLength)
             => string.IsNullOrEmpty(str) ? null : str.Length <= maxLength ? str : str[..maxLength];
-
-        public static bool Contains(this string str, string value, StringComparison comparisonType)
-            => str.IndexOf(value, comparisonType) >= 0;
 
         public static string ToTitleCase(this string str)
             => string.IsNullOrWhiteSpace(str) ? str : ti.ToTitleCase(ti.ToLower(str));

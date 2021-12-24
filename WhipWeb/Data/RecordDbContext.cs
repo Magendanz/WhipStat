@@ -51,5 +51,13 @@ namespace WhipStat.Data
 
             return sb.ToString();
         }
+
+        public string GetCandidateRatings(int orgId, short begin, short end)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Score\tBill\tBiennium");
+
+            return sb.ToString();
+        }
     }
 }

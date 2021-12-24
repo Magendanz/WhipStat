@@ -81,7 +81,7 @@ namespace WhipStat.DataAccess
 
         static public List<AgendaItem> GetAgendaItems(string agency, string committee, DateTime date)
             => WebClient.SendAsync<List<AgendaItem>>(HttpMethod.Get,
-                new Uri(appBase, $"/api/CommitteeMeetings/{agency}/{Uri.EscapeUriString(committee)}/{date:s}/AgendaItems")).Result;
+                new Uri(appBase, $"/api/CommitteeMeetings/{agency}/{Uri.EscapeDataString(committee)}/{date:s}/AgendaItems")).Result;
 
         static public List<T> GetList<T>(string requestUri)
         {

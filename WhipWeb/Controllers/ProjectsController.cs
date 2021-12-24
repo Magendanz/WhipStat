@@ -16,7 +16,6 @@ using WhipStat.Models.LegTech;
 using WhipStat.Models.PDC;
 using WhipStat.Models.ProjectViewModels;
 
-
 namespace WhipStat.Controllers
 {
     public class ProjectsController : Controller
@@ -25,10 +24,10 @@ namespace WhipStat.Controllers
         const string SessionKeyContentType = "_ContentType";
         const string SessionKeyContents = "_Contents";
 
-        VoterDbContext VoterDb = new VoterDbContext();
-        DonorDbContext DonorDb = new DonorDbContext();
-        ResultDbContext ResultDb = new ResultDbContext();
-        RecordDbContext RecordDb = new RecordDbContext();
+        readonly VoterDbContext VoterDb = new VoterDbContext();
+        readonly DonorDbContext DonorDb = new DonorDbContext();
+        readonly ResultDbContext ResultDb = new ResultDbContext();
+        readonly RecordDbContext RecordDb = new RecordDbContext();
 
         readonly SelectListItem SelectPrompt = new SelectListItem { Value = "0", Text = "Select...", Selected = true, Disabled = true };
         readonly string MemberTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\MemberTooltip.html"));
@@ -76,8 +75,8 @@ namespace WhipStat.Controllers
                     foreach (var item in precincts)
                     {
                         var entry = zip.CreateEntry($"{item.Value}.tsv");
-                        using (var writer = new StreamWriter(entry.Open()))
-                            writer.Write(VoterDb.GetVoters(model.District, item.Key));
+                        using var writer = new StreamWriter(entry.Open());
+                        writer.Write(VoterDb.GetVoters(model.District, item.Key));
                     }
                 }
 
@@ -262,7 +261,7 @@ namespace WhipStat.Controllers
             return list;
         }
 
-        private List<SelectListItem> GetYearList(int start, short increment = 1)
+        private static List<SelectListItem> GetYearList(int start, short increment = 1)
         {
             var list = new List<SelectListItem>();
 
@@ -275,7 +274,7 @@ namespace WhipStat.Controllers
             return list;
         }
 
-        private List<SelectListItem> GetChamberList()
+        private static List<SelectListItem> GetChamberList()
         {
             return new List<SelectListItem> {
                 new SelectListItem { Value = "0", Text = "Both Chambers", Selected = true },
@@ -306,7 +305,7 @@ namespace WhipStat.Controllers
             return ConvertMemberPoints(points);
         }
 
-        private double Stack(double x, List<Point> points)
+        private static double Stack(double x, List<Point> points)
         {
             const double dx = 1.0;
             const double dy = 1.0;
@@ -318,7 +317,7 @@ namespace WhipStat.Controllers
             return y;
         }
 
-        private DataTable ConvertMemberPoints(List<Point> points)
+        private static DataTable ConvertMemberPoints(List<Point> points)
         {
             var dt = new DataTable
             {
@@ -328,7 +327,7 @@ namespace WhipStat.Controllers
             };
 
             var series = points.GroupBy(p => p.Series).Select(p => p.First().Series).ToList();
-            var n = series.Count() * 2 + 1;
+            var n = series.Count * 2 + 1;
             foreach (var s in series)
             {
                 dt.cols.Add(new ColInfo { label = s, type = "number", p = new Dictionary<string, string> { { "median", GetMedian(points, s).ToString() } } });
@@ -358,7 +357,7 @@ namespace WhipStat.Controllers
             return base.PhysicalFile(path, "image/jpeg");
         }
 
-        private double GetMedian(List<Point> points, string series)
+        private static double GetMedian(List<Point> points, string series)
         {
             var list = points.Where(i => i.Series == series).OrderBy(i => i.x).Select(i => i.x);
             int index = list.Count() / 2;
@@ -394,7 +393,7 @@ namespace WhipStat.Controllers
             return View("Download");
         }
 
-        private List<SelectListItem> GetJurisdictionList()
+        private static List<SelectListItem> GetJurisdictionList()
         {
             return new List<SelectListItem> {
                 new SelectListItem { Value = "Legislative", Text = "Legislative" },
@@ -453,6 +452,31 @@ namespace WhipStat.Controllers
         private string GetTooltip(Models.LWS.Member member, double score) => String.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
         private string GetTooltip(Donor donor, double total, double bias, double winning) => String.Format(DonorTooltipHtml, donor.Name, total, bias, winning);
         private string GetPointStyle(double value) => String.Format(DonorPointStyle, ColorUtilities.GetIndexedColorOnGradient(value + 0.5, "#4285F4", "#DB4437"));
+
+        public IActionResult Ratings()
+        {
+            return View(new RatingsViewModel()
+            {
+                OddYears = GetYearList(2013),
+                EvenYears = GetYearList(2013),
+                From = "2021",
+                To = "2022"
+            });
+        }
+
+        [HttpPost]
+        [DisableRequestSizeLimit]
+        public IActionResult Ratings(RatingsViewModel model)
+        {
+            // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
+            // Do the time consuming work now, while loading indicator is displayed
+            HttpContext.Session.SetString(SessionKeyFileName, $"Candidate Ratings - {model.Organization} ({model.From}-{model.To}).tsv");
+            HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
+            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetCandidateRatings(model.Organization, Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
+
+            // Serve up the download page and deliver file
+            return View("Download");
+        }
 
         public IActionResult Download()
         {

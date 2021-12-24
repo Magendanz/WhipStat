@@ -1,0 +1,303 @@
+﻿north,n
+northeast,ne
+northwest,nw
+south,s
+southeast,se
+southwest,sw
+east,e
+west,w
+avenue,ave
+boulevard,blvd
+center,ctr
+circle,cir
+court,ct
+drive,dr
+expressway,expy
+freeway,fwy
+highway,hwy
+junction,jct
+lane,ln
+mountain,mtn
+parkway,pkwy
+place,pl
+road,rd
+route,rte
+street,st
+terrace,ter
+apartment,apt
+building,bldg
+room,rm
+suite,ste
+account,acct
+administration,admin
+administrator,admin
+administrators,admins
+advertising,ad
+agriculture,ag
+alabama,al
+alaska,ak
+america,amer
+american,amer
+and,&
+architects,arch
+arizona,az
+arkansas,ar
+assn,assoc
+associated,assoc
+association,assoc
+attorney,atty
+barbeque,bbq
+california,ca
+centers,ctrs
+central,cntrl
+chapter,ch
+city,cty
+cmte,comm
+colorado,co
+commercial,comm
+commission,comm
+committee,comm
+companies,cos
+company,co
+comprehensive,comp
+conditioning,cond
+condominium,condo
+conference,conf
+connecticut,ct
+construct,cons
+construction,cons
+consulting,cons
+convention,conv
+cooperative,coop
+corporation,corp
+council,cnl
+county,cnty
+defense,def
+delaware,de
+democrat,dem
+democrats,dems
+democratic,dem
+department,dept
+development,dev
+distributors,dist
+district,dist
+district of columbia,dc
+division,div
+doctor,dr
+doctors,drs
+ecology,eco
+education,edu
+eight,8
+eighth,8th
+electrical,elec
+elementary,elem
+eleven,11
+eleventh,11th
+employees,emp
+engineering,eng
+enterprise,ent
+equipment,equip
+established,est
+estate,est
+fabrication,fab
+family,fam
+federal,fed
+federated,fed
+federation,fed
+fifth,5th
+financial,fin
+first,1st
+five,5
+florida,fl
+four,4
+fourteenth,14th
+fourth,4th
+freight,frt
+fund,fnd
+general,gen
+generic,gen
+georgia,ga
+government,govt
+governor,gov
+grocers,groc
+group,grp
+guam,gu
+guild,gld
+hawaii,hi
+headquarters,hq
+high school,hs
+idaho,id
+illinois,il
+incorporated,inc
+independent,ind
+indiana,in
+information,info
+insurance,ins
+international,intl
+investments,inv
+iowa,ia
+junior,jr
+kansas,ks
+kentucky,ky
+legislative,leg
+lieutenant,lt
+limited,ltd
+local,lcl
+louisiana,la
+machinists,mach
+maine,me
+maintenance,maint
+major,mjr
+management,mgmt
+manufactured,mfg
+manufacturers,mfg
+manufacturing,mfg
+marketing,mktg
+maryland,md
+massachusetts,ma
+medical,med
+medical doctor,md
+metropolitan,met
+mexican,mex
+michigan,mi
+minnesota,mn
+mississippi,ms
+missouri,mo
+mister,mr
+montana,mt
+municipal,muni
+national,natl
+nebraska,ne
+nevada,nv
+new hampshire,nh
+new jersey,nj
+new mexico,nm
+new york,ny
+nine,9
+ninth,9th
+north carolina,nc
+north dakota,nd
+ohio,oh
+oklahoma,ok
+one,1
+operating,op
+order,ord
+oregon,or
+organization,org
+organizational,org
+pacific nw,pnw
+pennsylvania,pa
+performance,perf
+pharmaceutical,pharma
+pharmaceuticals,pharma
+physicians,phys
+point,pt
+police,pol
+political action comm,pac
+political action fnd,pac
+political affairs cnl,pac
+power,pwr
+premium,prem
+processors,proc
+professional,pro
+psychological,psych
+public,pub
+public relations,pr
+puerto rico,pr
+ranch,rnch
+region,reg
+regional,reg
+republican,rep
+republicans,reps
+reservation,res
+rhode island,ri
+saint,st
+second,2nd
+security,sec
+senate,sen
+senator,sen
+senior,sr
+service,svc
+services,svcs
+seven,7
+seventh,7th
+six,6
+sixth,6th
+society,soc
+south carolina,sc
+south dakota,sd
+special,spec
+square,sq
+state,st
+station,sta
+surgical,surg
+surplus,surpl
+systems,sys
+technical,tech
+technology,tech
+ten,10
+tennessee,tn
+tenth,10th
+texas,tx
+the,
+third,3rd
+thirteenth,13th
+three,3
+training,trng
+transportation,trans
+twelfth,12th
+two,2
+united states,us
+utah,ut
+valley,vly
+vegetables,veg
+vermont,vt
+virginia,va
+warehouse,whse
+wash,wa
+washington,wa
+west virginia,wv
+western,wstrn
+wisconsin,wi
+wyoming,wy
+amer fed of teachers,aft
+amer fed of st cnty & muni emp,afscme
+assoc builders & contractors,abc
+assoc gen contractors,agc
+assoc of wa business,awb
+gun owners action league,goal
+house dem campaign comm,hdcc
+house rep org comm,hroc
+intl assoc of firefighters,iaff
+intl brotherhood of electrical workers,ibew
+intl union of op engineers,iuoe
+league of women voters,lwv
+natl elec contractors assoc,neca
+natl fed of ind business,nfib
+pub school emp,pse
+pub utility dist,pud
+rental housing assoc,rha
+retired pub emp cnl,rpec
+sheet metal air rail trans,smart
+svc emp intl union,seiu
+united food & comm workers,ufcw
+university of wa,uw
+wa cannabusiness assoc,waca
+wa edu assoc,wea
+wa fed of st emp,afscme
+wa food industry assoc,wfia
+wa forest protection assoc,wfpa
+wa health care assoc,whcs
+wa multifamily housing assoc,wmfha
+wa physical therapy,wpt
+wa refuse & recycling assoc,wrra
+wa rental owners assoc,wroa
+wa st labor cnl,aflcio
+wa st podiatric medical assoc,wspma
+wa st university,wsu
+wa st veterinary medical assoc,wsvma
+wa tech industry assoc,wtia
+afl cio,aflcio
+wa st,wa
+weapac,wea pac
+wfse,afscme

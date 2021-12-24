@@ -7,7 +7,7 @@ namespace WhipStat.Models.LegTech
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Organization { get; set; }
-        public int OrgId { get; set; }
+        public int? OrgId { get; set; }
         public string Street { get; set; }
         public string City { get; set; }
         public string State { get; set; }
@@ -19,7 +19,7 @@ namespace WhipStat.Models.LegTech
         public string Agency { get; set; }
         public string AgendaItem { get; set; }
         public string BillId { get; set; }
-        public int BillNumber { get; set; }
+        public short? BillNumber { get; set; }
         public string Position { get; set; }
         public bool Testify { get; set; }
         public bool OutOfTown { get; set; }

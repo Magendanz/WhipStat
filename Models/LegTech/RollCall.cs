@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace WhipStat.Models.LegTech
@@ -8,7 +7,7 @@ namespace WhipStat.Models.LegTech
     {
         [Key]
         public int Id { get; set; }
-        public int BillNumber { get; set; }
+        public short BillNumber { get; set; }
         public string BillId { get; set; }
         public string Biennium { get; set; }
         public string Agency { get; set; }

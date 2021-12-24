@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Configuration;
 
 using WhipStat.Helpers;
 using WhipStat.Models.LegTech;
+
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WhipStat.DataAccess
 {
@@ -25,13 +27,17 @@ namespace WhipStat.DataAccess
         public DbSet<Vote> Votes { get; set; }
         public DbSet<Score> Scores { get; set; }
         public DbSet<Testimony> Testimonies { get; set; }
+        public DbSet<Organization> Organizations { get; set; }
 
         public readonly string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
             "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=192.168.2.2;Database=LegTech;Trusted_Connection=True;");
+            var builder = new ConfigurationBuilder();
+            builder.AddUserSecrets<RecordDbContext>();
+            var configuration = builder.Build();
+            optionsBuilder.UseSqlServer(configuration["RecordDb:SqlConnectionString"]);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -89,7 +95,7 @@ namespace WhipStat.DataAccess
             foreach (var biennium in biennia)
             {
                 Console.WriteLine($"Retrieving bills for {biennium} biennium...");
-                var year = Convert.ToInt32(biennium.Substring(0, 4));
+                var year = Convert.ToInt32(biennium[..4]);
                 var newBills = LwsAccess.GetLegislationByYear(year + 1);
                 newBills.AddRange(LwsAccess.GetLegislationByYear(year));
                 foreach (var bill in newBills)
@@ -135,13 +141,13 @@ namespace WhipStat.DataAccess
             SaveChanges();
         }
 
-        private string GetTitle(Bill bill)
+        private static string GetTitle(Bill bill)
             => LwsAccess.GetLegislation(bill.Biennium, bill.BillNumber).First(i => i.BillId == bill.BillId).ShortDescription;
 
-        private string GetSponsors(Bill bill)
+        private static string GetSponsors(Bill bill)
             => String.Join(",", LwsAccess.GetSponsors(bill.Biennium, bill.BillId).Select(i => i.Acronym));
 
-        private string GetCommittees(Bill bill)
+        private static string GetCommittees(Bill bill)
         {
             var list = new List<String>();
             foreach (var hearing in LwsAccess.GetHearings(bill.Biennium, bill.BillNumber).ToList())
@@ -150,7 +156,7 @@ namespace WhipStat.DataAccess
             return String.Join(",", list.Distinct());
         }
 
-        private PolicyArea GetBestPolicyArea(Bill bill, List<PolicyArea> areas)
+        private static PolicyArea GetBestPolicyArea(Bill bill, List<PolicyArea> areas)
         {
             int bestScore = 0;
             PolicyArea bestPolicy = null;
@@ -220,7 +226,7 @@ namespace WhipStat.DataAccess
                     calls.Add(new RollCall()
                     {
                         Id = id,
-                        BillNumber = int.Parse(roll.BillId[^4..]),      // Last four chars should be number
+                        BillNumber = short.Parse(roll.BillId[^4..]),      // Last four chars should be number
                         BillId = roll.BillId,
                         Biennium = roll.Biennium,
                         Agency = roll.Agency,
@@ -265,7 +271,7 @@ namespace WhipStat.DataAccess
             foreach (var bill in bills)
             {
                 var votes = calls.Where(i => i.BillId == bill.BillId && i.Biennium == bill.Biennium).ToList();
-                if (votes.Count() > 0)
+                if (votes.Count > 0)
                     bill.Score = votes.Average(i => i.Score);
 
                 ReportProgress((double)++i / count);
@@ -280,7 +286,7 @@ namespace WhipStat.DataAccess
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Scores");
             var scores = new HashSet<Score>();
             var members = Members.ToList();
-            int count = members.Count * biennia.Count(), i = 0;
+            int count = members.Count * biennia.Length, i = 0;
 
             Console.Write($"Calculating member scores...");
             foreach (var biennium in biennia)
@@ -347,17 +353,17 @@ namespace WhipStat.DataAccess
                             foreach (var t in i.Testifiers)
                                 test.Add(new Testimony
                                 {
-                                    LastName = t.LastName.Truncate(64),
-                                    FirstName = t.FirstName.Truncate(64),
-                                    Organization = t.Organization.Truncate(256),
-                                    Street = t.Street.Truncate(64),
-                                    City = t.City.Truncate(32),
-                                    State = t.State.Truncate(2),
-                                    Zip = t.Zip.Truncate(10),
-                                    Email = t.EmailAddress.Truncate(64),
-                                    Phone = t.PhoneNumber.Truncate(16),
-                                    BillId = i.BillId.Truncate(16),
-                                    Position = t.Position.Truncate(16),
+                                    LastName = t.LastName.Trim(64),
+                                    FirstName = t.FirstName.Trim(64),
+                                    Organization = t.Organization.Trim(256),
+                                    Street = t.Street.Trim(64),
+                                    City = t.City.Trim(32),
+                                    State = t.State.Trim(2),
+                                    Zip = t.Zip.Trim(10),
+                                    Email = t.EmailAddress.Trim(64),
+                                    Phone = t.PhoneNumber.Trim(16),
+                                    BillId = i.BillId.Trim(16),
+                                    Position = t.Position.Trim(16),
                                     Testify = t.IsSpeaking,
                                     OutOfTown = t.OutOfTown,
                                     CalledUp = t.CalledUp,
@@ -384,17 +390,17 @@ namespace WhipStat.DataAccess
             {
                 var record = new Testimony
                 {
-                    LastName = row["LastName"].ToTitleCase().Truncate(64),
-                    FirstName = row["FirstName"].ToTitleCase().Truncate(64),
-                    Organization = row["Organization"].ToTitleCase().Truncate(256),
-                    Street = row["Street"].ToTitleCase().Truncate(64),
-                    City = row["City"].ToTitleCase().Truncate(32),
-                    State = row["State"].ToUpperInvariant().Truncate(2),
-                    Zip = row["Zip"].Truncate(10),
-                    Email = row["Email"].ToLowerInvariant().Truncate(64),
-                    Phone = row["Phone"].ToNumeric().Truncate(16),
-                    BillId = row["BillId"].ToUpperInvariant().Truncate(16),
-                    Position = row["Position"].ToTitleCase().Truncate(16),
+                    LastName = row["LastName"].ToTitleCase().Trim(64),
+                    FirstName = row["FirstName"].ToTitleCase().Trim(64),
+                    Organization = row["Organization"].ToTitleCase().Trim(256),
+                    Street = row["Street"].ToTitleCase().Trim(64),
+                    City = row["City"].ToTitleCase().Trim(32),
+                    State = row["State"].ToUpperInvariant().Trim(2),
+                    Zip = row["Zip"].Trim(10),
+                    Email = row["Email"].ToLowerInvariant().Trim(64),
+                    Phone = row["Phone"].ToNumeric().Trim(16),
+                    BillId = row["BillId"].ToUpperInvariant().Trim(16),
+                    Position = row["Position"].ToTitleCase().Trim(16),
                     Testify = row["Testify"] == "Yes",
                     OutOfTown = row["OutOfTown"] == "Yes",
                     CalledUp = row["CalledUp"] == "Yes",
@@ -412,7 +418,74 @@ namespace WhipStat.DataAccess
             SaveChanges();
         }
 
-        public void GetAVStats(string biennium, params int[] bills)
+        public void MatchOrganizations()
+        {
+            // Load up our dictionary of canonized names
+            Console.WriteLine("Loading dictionary of canonized nicknames and abbreviations...");
+            var wordParser = new KeywordParser("Data/Aliases.csv");
+
+            Console.WriteLine("Loading testimony...");
+            var orgs = Organizations.ToList();
+            var testimonies = Testimonies.ToList();
+            int count = testimonies.Count, i = 0;
+
+            // We don't preserve the keywords, so we need to rebuild them here
+            foreach (var org in orgs)
+                org.Keywords = wordParser.Parse(org.Name);
+
+            Console.Write("Matching organizations...");
+            foreach (var testimony in testimonies)
+            {
+                // First, fill in some of our missing properties
+                var end = (testimony.TimeSignedIn.Year + 1) / 2 * 2;
+                testimony.Biennium = $"{end - 1}-{end % 100}";
+                if (!string.IsNullOrWhiteSpace(testimony.BillId))
+                {
+                    testimony.BillId = KeywordParser.Filter(testimony.BillId);
+                    if (short.TryParse(testimony.BillId[^4..], out var billId))
+                        testimony.BillNumber = billId;
+                }
+
+                // Look for a matching organization
+                if (!string.IsNullOrWhiteSpace(testimony.Organization))
+                {
+                    // Look for common keywords in organization name and pick best match
+                    var words = wordParser.Parse(testimony.Organization);
+                    if (words.Length > 0)
+                    {
+                        var org = BestKeywordMatch(orgs, words, 0.8);
+                        if (org != null)
+                            testimony.OrgId = org.Id;
+                    }
+                }
+                Testimonies.Update(testimony);
+                ReportProgress((double)++i / count);
+            }
+            Console.WriteLine("\nSaving changes...\n");
+            SaveChanges();
+        }
+
+        private static Organization BestKeywordMatch(IEnumerable<Organization> items, string[] keywords, double threshold)
+        {
+            Organization result = null;
+            double max = 0;
+            foreach (var item in items)
+            {
+                var match = item.Keywords.KeywordMatch(keywords);
+                if (match >= 1.0)
+                    return item;
+                else if (match > max)
+                {
+                    // If we don't find an exact match, keep track of the best match
+                    max = match;
+                    result = item;
+                }
+            }
+
+            return max >= threshold ? result : null;
+        }
+
+        public static void GetAVStats(string biennium, params int[] bills)
         {
             var members = LwsAccess.GetMembers(biennium);
 
@@ -464,7 +537,7 @@ namespace WhipStat.DataAccess
                     File.Move(file, Path.Combine(Path.GetDirectoryName(file), member.Id + ".jpg"));
             }
         }
-        private void ReportProgress(double complete)
+        private static void ReportProgress(double complete)
         {
             const int padding = 8;
 
