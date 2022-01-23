@@ -86,9 +86,9 @@
         // draws it.
         function drawChart() {
 
-            $.get("/Projects/GetMemberDataTable/?" + $('form').serialize(), function (jsonData) {
+            $.get("/Projects/GetMemberDataTable/?" + $('form').serialize(), function (data) {
                 // Create our data table out of JSON data loaded from server.
-                var data = new google.visualization.DataTable(jsonData);
+                var data = new google.visualization.DataTable(data);
 
                 // Get filter settings.
                 var area = $("#Area option:selected").text();
@@ -96,7 +96,7 @@
                 var from = $("#From option:selected").text();
                 var to = $("#To option:selected").text();
                 var options = {
-                    title: area + ", " + chamber + " (" + from + "-" + to + ")",
+                    title: area + ", " + chamber + " (" + from + "-" + to.slice(-2) + ")",
                     height: 640,
                     chartArea: { width: '80%', height: '80%' },
                     legend: { position: 'bottom' },

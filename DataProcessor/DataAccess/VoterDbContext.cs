@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
 using WhipStat.Models.VRDB;
 
 namespace WhipStat.DataAccess
@@ -17,7 +19,10 @@ namespace WhipStat.DataAccess
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=192.168.2.2;Database=VRDB;Trusted_Connection=True;");
+            var builder = new ConfigurationBuilder();
+            builder.AddUserSecrets<VoterDbContext>();
+            var configuration = builder.Build();
+            optionsBuilder.UseSqlServer(configuration["VoterDb:SqlConnectionString"]);
         }
 
         public Dictionary<int, string> GetPrecincts(int district)
@@ -41,7 +46,7 @@ namespace WhipStat.DataAccess
 
             return sb.ToString();
         }
-        private int GetValue(string str)
+        private static int GetValue(string str)
         {
             // These legislative district codes are very inconsistently formatted, so we're going to clean it up
             return Convert.ToInt32(new string(str.Where(c => char.IsDigit(c)).ToArray()));

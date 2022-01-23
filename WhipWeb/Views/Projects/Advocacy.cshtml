@@ -1,23 +1,31 @@
-@model WhipStat.Models.ProjectViewModels.OrgDonorsViewModel
-<h2>Organizational Donors</h2>
+@model WhipStat.Models.ProjectViewModels.AdvocacyViewModel
+<h2>Identify Friend or Foe</h2>
 
 <div class="row">
     <div class="col-md-8">
-        <h3>Partisan Distribution of Organizational Donors:</h3>
         <div id="Chart">
             <div class="mx-auto" style="opacity:0.2; width: 40%; margin-top: 200px;">
                 <img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
             </div>
         </div>
+        <div id="List">
+            <table class="table" id="Bills">
+
+            </table>
+        </div>
     </div>
     <div class="col-md-4">
         <section>
             <h3>Filters:</h3>
-            <form asp-controller="Projects" asp-action="OrgDonors" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
+            <form asp-controller="Projects" asp-action="Rankings" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
                 <ul class="list-group">
                     <li class="list-group-item">
-                        <h5 class="list-group-item-heading">Jurisdication Type:</h5>
-                        <select asp-for="Jurisdiction" asp-items="Model.Jurisdictions"></select>
+                        <h5 class="list-group-item-heading">Organization:</h5>
+                        <select asp-for="Organization" asp-items="Model.Organizations" style="width: 300px;"></select>
+                    </li>
+                    <li class="list-group-item">
+                        <h5 class="list-group-item-heading">Chamber:</h5>
+                        <select asp-for="Chamber" asp-items="Model.Chambers"></select>
                     </li>
                     <li class="list-group-item">
                         <h5 class="list-group-item-heading">Date Range:</h5>
@@ -34,7 +42,7 @@
                     <li class="list-group-item" id="Loading" style="opacity:0.5;">
                         <div class="list-group-item-text">
                             <div class="progress mx-auto" style="width: 50%; height: 32px;">
-                                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%; height: 32px;">Loading...</div>
+                                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%;">Loading...</div>
                             </div>
                         </div>
                     </li>
@@ -45,7 +53,10 @@
         <section>
             <h3>Methodology:</h3>
             <p>
-                The partisanship score for each donor is the difference in percentage of donations by party, giving each a range from 100 (exclusively Republican) to -100 (exclusively Democrat).
+                An organization's support for a bill is calculated as the average position for all people signing in for committee hearings on that bill from that organization, with 'Pro' counting as 1, 'Con' as -1 and 'Other' as 0. (All positions are included, regardless of whether they actually testify.) Member support for a bill is calculated as the average roll call floor vote, counting 'Yea' as 1, 'Nay' as -1, and 'Absent or Excused' as 0.
+            </p>
+            <p>
+                A correlation coefficient is then calculated between the bill sequence for the organization and each member of the legislature.  Members who always take the organization's position will have 100% correlation and those who always take the opposing position will have -100% correlation.
             </p>
         </section>
         <section>
@@ -54,9 +65,8 @@
                 More information is available at the sites below:
             </p>
             <ul>
-                <li><a href="https://blog.voter-science.com/2018/03/27/how-partisan-are-wa-organizational-donors/">VS Blog - How partisan are WA organizational donors?</a></li>
-                <li><a href="https://blog.voter-science.com/2017/04/11/analyzing-the-wa-political-spectrum/">VS Blog - Analyzing the WA Political Spectrum</a></li>
-                <li><a href="https://www.pdc.wa.gov/browse/open-data">PDC Open Data</a></li>
+                <li><a href="https://legtracker.voter-science.com/">Voter Science Bill Tracker</a></li>
+                <li><a href="http://wslwebservices.leg.wa.gov/">WA Legislative Web Services</a></li>
             </ul>
         </section>
     </div>
@@ -79,21 +89,20 @@
         // draws it.
         function drawChart() {
 
-            $.get("/Projects/GetDonorDataTable/?" + $('form').serialize(), function (jsonData) {
+            $.get("/Projects/GetVotingRecordDataTable/?" + $('form').serialize(), function (data) {
                 // Create our data table out of JSON data loaded from server.
-                var data = new google.visualization.DataTable(jsonData);
+                var data = new google.visualization.DataTable(data);
 
                 // Get filter settings.
-                var jurisdiction = $("#Jurisdiction option:selected").text();
+                var org = $("#Organization option:selected").text();
                 var from = $("#From option:selected").text();
                 var to = $("#To option:selected").text();
                 var options = {
-                    title: jurisdiction + " Races (" + from + "-" + to.slice(-2) + ")",
+                    title: org + " (" + from + "-" + to.slice(-2) + ")",
                     height: 640,
                     chartArea: { width: '80%', height: '80%' },
-                    legend: { position: 'none' },
-                    vAxis: { format: '$#,###,###' },
-                    hAxis: { format: '#%' },
+                    legend: { position: 'bottom' },
+                    colors: ['#4285F4', '#DB4437'],
                     dataOpacity: 0.8,
                     pointSize: 10,
                     animation: { duration: 1000, easing: 'out', startup: true },
@@ -109,6 +118,28 @@
             });
         }
 
+        function createTable() {
+            
+            $("#Bills").empty();
+            $.get("/Projects/GetBillRatings/?" + $('form').serialize(), function (data) {
+                var thead = $("<thead/>");
+                var tr = $("<tr>");
+                $.each(data.cols, function (key, col) {
+                    tr.append($("<th>").text(col.label));
+                });
+                thead.append(tr);
+                var tbody = $("<tbody/>");
+                $.each(data.rows, function (key, row) {
+                    var tr = $("<tr>");
+                    $.each(row.c, function (key, cell) {
+                        tr.append($("<td>").text(cell.v));
+                    });
+                    tbody.append(tr);
+                });
+                $("#Bills").append(thead, tbody);
+            });
+        }
+
     </script>
     <script>
         $("select").change(function () {
@@ -116,6 +147,7 @@
                 $("#Submit").hide();
                 $("#Loading").show();
                 drawChart();
+                createTable();
             }
         }).change();
         $("#Download").click(function () {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
 using WhipStat.Models.PDC;
 
 namespace WhipStat.Data
@@ -18,7 +20,10 @@ namespace WhipStat.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=192.168.2.2;Database=PDC;Trusted_Connection=True;");
+            var builder = new ConfigurationBuilder();
+            builder.AddUserSecrets<DonorDbContext>();
+            var configuration = builder.Build();
+            optionsBuilder.UseSqlServer(configuration["DonorDb:SqlConnectionString"]);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

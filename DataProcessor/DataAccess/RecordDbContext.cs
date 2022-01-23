@@ -28,6 +28,8 @@ namespace WhipStat.DataAccess
         public DbSet<Score> Scores { get; set; }
         public DbSet<Testimony> Testimonies { get; set; }
         public DbSet<Organization> Organizations { get; set; }
+        public DbSet<AdvocacyRecord> AdvocacyRecords { get; set; }
+        public DbSet<VotingRecord> VotingRecords { get; set; }
 
         public readonly string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
             "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
@@ -46,6 +48,8 @@ namespace WhipStat.DataAccess
             modelBuilder.Entity<Vote>().HasKey(t => new { t.RollCallId, t.MemberId });
             modelBuilder.Entity<Score>().HasKey(t => new { t.MemberId, t.Year, t.PolicyArea });
             modelBuilder.Entity<Testimony>().HasKey(t => new { t.LastName, t.FirstName, t.TimeSignedIn });
+            modelBuilder.Entity<AdvocacyRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
+            modelBuilder.Entity<VotingRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
         }
 
         public void GetMembers()
@@ -463,6 +467,91 @@ namespace WhipStat.DataAccess
             }
             Console.WriteLine("\nSaving changes...\n");
             SaveChanges();
+        }
+
+        public void ScoreVotingRecords()
+        {
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.VotingRecords");
+            var members = Members.ToList();
+            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
+
+            Console.WriteLine($"Calculating voting records...");
+            foreach (var biennium in biennia)
+            {
+                Console.Write($"Biennium: {biennium}");
+                var records = new HashSet<VotingRecord>();
+                var bills = Bills.Where(i => i.Biennium == biennium).ToList();
+                int count = bills.Count, i = 0;
+
+                var votes = (from v in Votes join r in RollCalls on v.RollCallId equals r.Id
+                            where r.Biennium == biennium && r.Motion.Contains("Final Passage")
+                            select new { r.BillNumber, v.MemberId, v.MemberVote }).ToList();
+                foreach (var bill in bills)
+                {
+                    var sponsors = bill.Sponsors.Split(",");
+                    foreach (var member in members)
+                    {
+                        var tally = votes.Where(i => i.BillNumber == bill.BillNumber && i.MemberId == member.Id).ToList();
+                        if (tally.Count == 0)
+                            continue;
+                        var score = tally.Sum(i => i.MemberVote == "Y" ? 1 : i.MemberVote == "N" ? -1 : 0);
+                        var sponsor = Array.IndexOf(sponsors, member.Acronym) + 1;
+                        records.Add(new VotingRecord
+                        { 
+                            Id = member.Id, 
+                            BillNumber = bill.BillNumber, 
+                            Biennium = biennium, 
+                            Sponsor = (short)sponsor,
+                            Votes = (short)tally.Count, 
+                            Support = (short)score 
+                        });
+                    }
+                    ReportProgress((double)++i / count);
+                }
+                Console.WriteLine("\nSaving changes...\n");
+                VotingRecords.AddRange(records);
+                SaveChanges();
+            }
+        }
+
+        public void ScoreAdvocacyRecords()
+        {
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.AdvocacyRecords");
+            var testimonies = Testimonies.ToList();
+            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
+
+            Console.WriteLine($"Calculating advocacy records...");
+            foreach (var biennium in biennia)
+            {
+                Console.Write($"Biennium: {biennium}");
+                var records = new HashSet<AdvocacyRecord>();
+                var orgs = testimonies.Where(i => i.Biennium == biennium && i.OrgId.HasValue && i.BillNumber.HasValue)
+                    .GroupBy(i => i.OrgId);
+                int count = orgs.Count(), i = 0;
+
+                foreach (var org in orgs)
+                {
+                    var bills = org.GroupBy(i => i.BillNumber);
+                    foreach (var bill in bills)
+                    {
+                        var support = bill.Sum(i => i.Position == "Pro" ? 1 : i.Position == "Con" ? -1 : 0);
+                        var sponsor = bill.Sum(i => i.Testify ? 1 : 0);
+                        records.Add(new AdvocacyRecord
+                        {
+                            Id = org.Key.Value,
+                            BillNumber = bill.Key.Value,
+                            Biennium = biennium,
+                            Sponsor = (short)sponsor,
+                            Votes = (short)bill.Count(),
+                            Support = (short)support
+                        });
+                    }
+                    ReportProgress((double)++i / count);
+                }
+                Console.WriteLine("\nSaving changes...\n");
+                AdvocacyRecords.AddRange(records);
+                SaveChanges();
+            }
         }
 
         private static Organization BestKeywordMatch(IEnumerable<Organization> items, string[] keywords, double threshold)

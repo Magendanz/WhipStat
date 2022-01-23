@@ -34,8 +34,8 @@ namespace WhipStat.Controllers
         readonly string DonorTooltipHtml = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorTooltip.html"));
         readonly string DonorPointStyle = System.IO.File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\html\DonorPointStyle.html"));
 
-        private readonly IHostingEnvironment _hostingEnvironment;
-        public ProjectsController(IHostingEnvironment hostingEnvironment)
+        private readonly IWebHostEnvironment _hostingEnvironment;
+        public ProjectsController(IWebHostEnvironment hostingEnvironment)
         {
             _hostingEnvironment = hostingEnvironment;
         }
@@ -47,7 +47,10 @@ namespace WhipStat.Controllers
 
         public IActionResult Voters()
         {
-            return View(new VotersViewModel() { Districts = GetDistrictList() });
+            return View(new VotersViewModel()
+            {
+                Districts = GetDistrictList()
+            });
         }
 
         [HttpPost]
@@ -151,7 +154,12 @@ namespace WhipStat.Controllers
 
         public IActionResult Results()
         {
-            return View(new ResultsViewModel() { Districts = GetKCDistrictList(), Years = GetYearList(), Elections = GetElectionList() });
+            return View(new ResultsViewModel()
+            {
+                Districts = GetKCDistrictList(),
+                Years = GetYearList(),
+                Elections = GetElectionList()
+            });
         }
 
         [HttpPost]
@@ -230,8 +238,8 @@ namespace WhipStat.Controllers
                 OddYears = GetYearList(2003, 2),
                 EvenYears = GetYearList(2004, 2),
                 Chambers = GetChamberList(),
-                From = "2013",
-                To = "2022"
+                From = 2013,
+                To = 2022
             });
         }
 
@@ -243,9 +251,9 @@ namespace WhipStat.Controllers
             // Do the time consuming work now, while loading indicator is displayed
             var area = model.Area == "0" ? "All Policy Areas" : RecordDb.PolicyAreas.Single(i => i.Id == Convert.ToInt32(model.Area)).Name;
             var chamber = model.Chamber == "0" ? "Both Chambers" : model.Chamber;
-            HttpContext.Session.SetString(SessionKeyFileName, $"Partisan Leaderboard - {area}, {chamber} ({model.From}-{model.To}).tsv");
+            HttpContext.Session.SetString(SessionKeyFileName, $"Partisan Leaderboard - {area}, {chamber} ({model.From}-{model.To % 100:N2}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
-            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetLeaderboard(model.Chamber, Convert.ToInt16(model.Area), Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
+            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetPartisanLeaderboard(Convert.ToInt16(model.Area), model.Chamber, model.From, model.To));
 
             // Serve up the download page and deliver file
             return View("Download");
@@ -275,14 +283,11 @@ namespace WhipStat.Controllers
         }
 
         private static List<SelectListItem> GetChamberList()
-        {
-            return new List<SelectListItem> {
+            => new List<SelectListItem> {
                 new SelectListItem { Value = "0", Text = "Both Chambers", Selected = true },
                 new SelectListItem { Value = "House", Text = "House of Representatives" },
-                new SelectListItem { Value = "Senate", Text = "Senate" },
-
+                new SelectListItem { Value = "Senate", Text = "Senate" }
             };
-        }
 
         [HttpGet]
         public DataTable GetMemberDataTable(string chamber, short area, short from, short to)
@@ -298,7 +303,7 @@ namespace WhipStat.Controllers
                 if (count > 10)
                 {
                     var score = total / count;
-                    points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, score), Series = member.Party });
+                    points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, "Partisan bias", score), Series = member.Party });
                 }
             }
 
@@ -326,7 +331,7 @@ namespace WhipStat.Controllers
                 p = new Dictionary<string, string>()
             };
 
-            var series = points.GroupBy(p => p.Series).Select(p => p.First().Series).ToList();
+            var series = points.Select(i => i.Series).Distinct().OrderBy(i => i).ToList();
             var n = series.Count * 2 + 1;
             foreach (var s in series)
             {
@@ -371,7 +376,7 @@ namespace WhipStat.Controllers
         {
             return View(new OrgDonorsViewModel()
             {
-                OddYears = GetYearList(2008),
+                OddYears = GetYearList(2007),
                 EvenYears = GetYearList(2008),
                 Jurisdictions = GetJurisdictionList(),
                 From = "2007",
@@ -385,7 +390,7 @@ namespace WhipStat.Controllers
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            HttpContext.Session.SetString(SessionKeyFileName, $"Donor Leaderboard - {model.Jurisdiction} Races ({model.From}-{model.To}).tsv");
+            HttpContext.Session.SetString(SessionKeyFileName, $"Donor Leaderboard - {model.Jurisdiction} Races ({model.From}-{model.To[^2..]}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
             HttpContext.Session.SetString(SessionKeyContents, DonorDb.GetLobbyLeaders(model.Jurisdiction, Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
 
@@ -438,44 +443,146 @@ namespace WhipStat.Controllers
 
             foreach (var point in points)
             {
-                var dps = new DataPointSet { c = new DataPoint[dt.cols.Count] };
-                dps.c[0] = new DataPoint { v = point.x.ToString() };
-                dps.c[1] = new DataPoint { v = point.y.ToString() };
-                dps.c[2] = new DataPoint { v = GetPointStyle(point.x) };
-                dps.c[3] = new DataPoint { v = point.Label };
-                dt.rows.Add(dps);
+                dt.rows.Add(new DataPointSet { c = new DataPoint[] {
+                    new DataPoint { v = point.x.ToString() },
+                    new DataPoint { v = point.y.ToString() },
+                    new DataPoint { v = GetPointStyle(point.x) },
+                    new DataPoint { v = point.Label } }
+                });
             }
 
             return dt;
         }
 
-        private string GetTooltip(Models.LWS.Member member, double score) => String.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, score);
+        private string GetTooltip(Models.LWS.Member member, string label, double score) => string.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, label, score);
         private string GetTooltip(Donor donor, double total, double bias, double winning) => String.Format(DonorTooltipHtml, donor.Name, total, bias, winning);
         private string GetPointStyle(double value) => String.Format(DonorPointStyle, ColorUtilities.GetIndexedColorOnGradient(value + 0.5, "#4285F4", "#DB4437"));
 
-        public IActionResult Ratings()
+        public IActionResult Advocacy()
         {
-            return View(new RatingsViewModel()
+            return View(new AdvocacyViewModel()
             {
-                OddYears = GetYearList(2013),
-                EvenYears = GetYearList(2013),
-                From = "2021",
-                To = "2022"
+                Organizations = GetOrganizationList(),
+                OddYears = GetYearList(2013, 2),
+                EvenYears = GetYearList(2014, 2),
+                Chambers = GetChamberList(),
+                From = 2013,
+                To = 2022
             });
         }
 
         [HttpPost]
         [DisableRequestSizeLimit]
-        public IActionResult Ratings(RatingsViewModel model)
+        public IActionResult Advocacy(AdvocacyViewModel model)
         {
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            HttpContext.Session.SetString(SessionKeyFileName, $"Candidate Ratings - {model.Organization} ({model.From}-{model.To}).tsv");
+            var chamber = model.Chamber == "0" ? "Member" : model.Chamber;
+            var org = RecordDb.Organizations.First(i => i.Id == model.Organization).Name;
+            HttpContext.Session.SetString(SessionKeyFileName, $"{chamber} Rankings - {org} ({model.From}-{model.To}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
-            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetCandidateRatings(model.Organization, Convert.ToInt16(model.From), Convert.ToInt16(model.To)));
+            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetMemberLeaderboard(model.Organization, model.Chamber, model.From, model.To));
 
             // Serve up the download page and deliver file
             return View("Download");
+        }
+
+        public List<SelectListItem> GetOrganizationList()
+        {
+            var list = new List<SelectListItem> { SelectPrompt };
+            list.AddRange(RecordDb.Organizations.OrderBy(i => i.Name).Select(i => new SelectListItem(i.Name, i.Id.ToString())));
+            return list;
+        }
+
+        [HttpGet]
+        public DataTable GetBillRatings(int organization, short from, short to)
+        {
+            var dt = new DataTable
+            {
+                cols = new List<ColInfo> {
+                    new ColInfo { label = "Biennium", type = "string" },
+                    new ColInfo { label = "Bill", type = "string" },
+                    new ColInfo { label = "Title", type = "string" },
+                    new ColInfo { label = "Count", type = "number" },
+                    new ColInfo { label = "Testifying", type = "number" },
+                    new ColInfo { label = "Support", type = "number" }
+                },
+                rows = new List<DataPointSet>(),
+                p = new Dictionary<string, string>()
+            };
+
+            var records = RecordDb.AdvocacyRecords.Where(i => i.Id == organization && i.Biennium.CompareTo($"{from}") > 0 && i.Biennium.CompareTo($"{to}") < 0)
+                .Join(RecordDb.Bills, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber }, (i, j) => new { i.Biennium, i.BillNumber, j.AbbrTitle, i.Sponsor, i.Votes, i.Support })
+                .Distinct().OrderBy(i => i.Biennium).ThenBy(i => i.BillNumber).ToList();
+
+            foreach (var record in records)
+                dt.rows.Add(new DataPointSet
+                {
+                    c = new DataPoint[] {
+                    new DataPoint { v = record.Biennium },
+                    new DataPoint { v = record.BillNumber.ToString() },
+                    new DataPoint { v = record.AbbrTitle },
+                    new DataPoint { v = record.Votes.ToString() },
+                    new DataPoint { v = record.Sponsor.ToString() },
+                    new DataPoint { v = $"{(double)record.Support / record.Votes:P0}" } }
+                });
+
+            return dt;
+        }
+
+        [HttpGet]
+        public DataTable GetVotingRecordDataTable(int organization, string chamber, short from, short to)
+        {
+            var points = new List<Point>();
+            var members = RecordDb.Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.Party).ToList();
+            var records = RecordDb.AdvocacyRecords.Where(i => i.Id == organization && i.Biennium.CompareTo($"{from}") > 0 && i.Biennium.CompareTo($"{to}") < 0)
+                .Join(RecordDb.VotingRecords, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber },
+                (i, j) => new { j.Id, j.Sponsor, j.Votes, j.Support, Count = i.Votes, Testify = i.Sponsor, Favor = i.Support }).ToList();
+
+            foreach (var member in members)
+            {
+                var tally = records.Where(i => i.Id == member.Id);
+                int n = tally.Count();
+                if (n > 0)
+                {
+                    // Compute the correlation
+                    //double sumX = 0, sumY = 0, sumX2 = 0, sumY2 = 0, sumXY = 0;
+                    //foreach (var i in tally)
+                    //{
+                    //    var x = (double)i.Support / i.Votes;
+                    //    var y = (double)i.Favor / i.Count;
+                    //    sumX += x;
+                    //    sumY += y;
+                    //    sumX2 += x * x;
+                    //    sumY2 += y * y;
+                    //    sumXY += x * y;
+                    //}
+                    //var stdX = Math.Sqrt(sumX2 / n - sumX * sumX / n / n);
+                    //var stdY = Math.Sqrt(sumY2 / n - sumY * sumY / n / n);
+                    //var covariance = sumXY / n - sumX * sumY / n / n;
+                    //var score = covariance / stdX / stdY * 100;
+
+                    var score = tally.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count);   // Quick-n-dirty correlation!
+                    points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, "Correlation", score), Series = member.Party });
+                }
+            }
+
+            return ConvertMemberPoints(points);
+        }
+
+        private double Correlation(double[] values1, double[] values2)
+        {
+            var avg1 = values1.Average();
+            var avg2 = values2.Average();
+
+            var sum1 = values1.Zip(values2, (x1, y1) => (x1 - avg1) * (y1 - avg2)).Sum();
+
+            var sumSqr1 = values1.Sum(x => Math.Pow((x - avg1), 2.0));
+            var sumSqr2 = values2.Sum(y => Math.Pow((y - avg2), 2.0));
+
+            var result = sum1 / Math.Sqrt(sumSqr1 * sumSqr2);
+
+            return result;
         }
 
         public IActionResult Download()

@@ -14,6 +14,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)LegTech\Bill.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LegTech\Organization.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LegTech\PolicyArea.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LegTech\Record.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LegTech\RollCall.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LegTech\Score.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LegTech\Testimony.cs" />

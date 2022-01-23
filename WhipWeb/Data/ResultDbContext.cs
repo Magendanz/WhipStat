@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
 using WhipStat.Models.Elections;
 
 namespace WhipStat.Data
@@ -14,7 +16,10 @@ namespace WhipStat.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(@"Server=192.168.2.2;Database=Elections;Trusted_Connection=True;");
+            var builder = new ConfigurationBuilder();
+            builder.AddUserSecrets<ResultDbContext>();
+            var configuration = builder.Build();
+            optionsBuilder.UseSqlServer(configuration["ResultDb:SqlConnectionString"]);
         }
 
         public string GetResults(int district, int year, string election, string race, string entry)
