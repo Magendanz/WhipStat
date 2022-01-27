@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +12,11 @@ namespace WhipStat.Helpers
     public static class WebClient
     {
         private static readonly HttpClient client = new HttpClient(new RetryHandler());
-        private static readonly JsonSerializerOptions options = new JsonSerializerOptions();
+        private static readonly JsonSerializerOptions options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString
+        };
 
         public static async Task<T> SendAsync<T>(HttpMethod method, Uri url, string authorization = null, object body = null)
         {
@@ -22,11 +26,8 @@ namespace WhipStat.Helpers
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authorization);
             if (body != null)
             {
-                HttpContent content = body as HttpContent;
-                if (content != null)
-                {
+                if (body is HttpContent content)
                     request.Content = content;
-                }
                 else
                 {
                     string json = JsonSerializer.Serialize(body, options);
@@ -42,18 +43,19 @@ namespace WhipStat.Helpers
             string responseBody = "{}";
             if (response.Content != null)
             {
-                // sometimes returning new HttpResponseMessage() may yield no body. 
+                // Sometimes returning new HttpResponseMessage() may yield no body. 
                 responseBody = await response.Content.ReadAsStringAsync();
             }
 
             ThrowIfFailed(method, url, response, responseBody);
 
-            return JsonSerializer.Deserialize<T>(responseBody);
+            var value = JsonSerializer.Deserialize<T>(responseBody, options);
+            return value;
         }
 
         private static void ThrowIfFailed(HttpMethod method, Uri url, HttpResponseMessage response, string body)
         {
-            if (response.IsSuccessStatusCode && !body.StartsWith("An error"))   // TODO: Remove hack when success code isn't returned for failure
+            if (response.IsSuccessStatusCode)
                 return;
 
             throw new InvalidOperationException($"Call to {method} {url} failed with {response.StatusCode}. Body={body}");

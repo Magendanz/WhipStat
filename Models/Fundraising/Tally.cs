@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace WhipStat.Models.PDC
+namespace WhipStat.Models.Fundraising
 {
     public class Tally
     {

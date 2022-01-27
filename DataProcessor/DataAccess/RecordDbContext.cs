@@ -6,10 +6,10 @@ using System.Linq;
 
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 
 using WhipStat.Helpers;
+using WhipStat.Models.PDC;
 using WhipStat.Models.LegTech;
 
 using static System.Net.Mime.MediaTypeNames;
@@ -422,6 +422,28 @@ namespace WhipStat.DataAccess
             SaveChanges();
         }
 
+        public void GetOrganizations()
+        {
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Organizations");
+
+            var orgs = new HashSet<Organization>();
+            var employers = PdcAccess.GetEmployers().OrderByDescending(i => i.employment_year).ThenBy(i => i.employer_name);
+            var groups = employers.GroupBy(i => i.employer_id);
+            foreach (var group in groups)
+            {
+                var employer = group.First();
+                orgs.Add(new Organization
+                {
+                    Id = Convert.ToInt32(employer.employer_id),
+                    Name = employer.employer_name.IsUpper() ? employer.employer_name.ToTitleCase() : employer.employer_name
+                });
+            }
+
+            Console.WriteLine("\nSaving changes...\n");
+            Organizations.AddRange(orgs);
+            SaveChanges();
+        }
+
         public void MatchOrganizations()
         {
             // Load up our dictionary of canonized names
@@ -450,6 +472,7 @@ namespace WhipStat.DataAccess
                         testimony.BillNumber = billId;
                 }
 
+                testimony.OrgId = null;
                 // Look for a matching organization
                 if (!string.IsNullOrWhiteSpace(testimony.Organization))
                 {

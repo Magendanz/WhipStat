@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace WhipStat.Models.PDC
+namespace WhipStat.Models.Fundraising
 {
     public class Campaign
     {

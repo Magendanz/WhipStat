@@ -13,7 +13,7 @@ using System.Text;
 using WhipStat.Data;
 using WhipStat.Helpers;
 using WhipStat.Models.LegTech;
-using WhipStat.Models.PDC;
+using WhipStat.Models.Fundraising;
 using WhipStat.Models.ProjectViewModels;
 
 namespace WhipStat.Controllers
@@ -479,7 +479,7 @@ namespace WhipStat.Controllers
             // Do the time consuming work now, while loading indicator is displayed
             var chamber = model.Chamber == "0" ? "Member" : model.Chamber;
             var org = RecordDb.Organizations.First(i => i.Id == model.Organization).Name;
-            HttpContext.Session.SetString(SessionKeyFileName, $"{chamber} Rankings - {org} ({model.From}-{model.To}).tsv");
+            HttpContext.Session.SetString(SessionKeyFileName, $"{chamber} Correlation - {org} ({model.From}-{model.To}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
             HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetMemberLeaderboard(model.Organization, model.Chamber, model.From, model.To));
 
@@ -490,7 +490,10 @@ namespace WhipStat.Controllers
         public List<SelectListItem> GetOrganizationList()
         {
             var list = new List<SelectListItem> { SelectPrompt };
-            list.AddRange(RecordDb.Organizations.OrderBy(i => i.Name).Select(i => new SelectListItem(i.Name, i.Id.ToString())));
+            var orgs = RecordDb.Organizations
+                .Join(RecordDb.Testimonies, i => i.Id, j => j.OrgId, (i, j) => i)
+                .Distinct().OrderBy(i => i.Name).Select(i => new SelectListItem(i.Name, i.Id.ToString()));
+            list.AddRange(orgs);
             return list;
         }
 
@@ -545,7 +548,7 @@ namespace WhipStat.Controllers
                 int n = tally.Count();
                 if (n > 0)
                 {
-                    // Compute the correlation
+                    // Compute the Pearson correlation coefficient
                     //double sumX = 0, sumY = 0, sumX2 = 0, sumY2 = 0, sumXY = 0;
                     //foreach (var i in tally)
                     //{
@@ -568,21 +571,6 @@ namespace WhipStat.Controllers
             }
 
             return ConvertMemberPoints(points);
-        }
-
-        private double Correlation(double[] values1, double[] values2)
-        {
-            var avg1 = values1.Average();
-            var avg2 = values2.Average();
-
-            var sum1 = values1.Zip(values2, (x1, y1) => (x1 - avg1) * (y1 - avg2)).Sum();
-
-            var sumSqr1 = values1.Sum(x => Math.Pow((x - avg1), 2.0));
-            var sumSqr2 = values2.Sum(y => Math.Pow((y - avg2), 2.0));
-
-            var result = sum1 / Math.Sqrt(sumSqr1 * sumSqr2);
-
-            return result;
         }
 
         public IActionResult Download()

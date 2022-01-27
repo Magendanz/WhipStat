@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-using WhipStat.Models.PDC;
+using WhipStat.Models.Fundraising;
 
 namespace WhipStat.Data
 {

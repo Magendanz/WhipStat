@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace WhipStat.Models.PDC
+namespace WhipStat.Models.Fundraising
 {
     public class Party
     {

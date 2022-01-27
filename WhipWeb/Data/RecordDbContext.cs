@@ -7,7 +7,6 @@ using System.Runtime.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 using WhipStat.Models.LegTech;
-using WhipStat.Models.PDC;
 using Microsoft.Extensions.Configuration;
 
 namespace WhipStat.Data
