@@ -6,6 +6,7 @@
     <meta property="og:description" content="When connecting political and non-profit organizations to the tech community, we'll sometimes need to throw a proof-of-concept together quickly just to illustrate a point.  That's the purpose of this WhipStat site." />
     <meta property="og:image" content="http://www.whipstat.com/images/logo.jpg" />
     <title>@ViewData["Title"] - WhipStat</title>
+    <link rel="stylesheet" href="~/lib/jquery-ui/dist/jquery-ui.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
@@ -47,6 +48,7 @@
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-ui/dist/jquery-ui.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

@@ -15,6 +15,7 @@ using WhipStat.Helpers;
 using WhipStat.Models.LegTech;
 using WhipStat.Models.Fundraising;
 using WhipStat.Models.ProjectViewModels;
+using System.Security.Cryptography;
 
 namespace WhipStat.Controllers
 {
@@ -462,7 +463,6 @@ namespace WhipStat.Controllers
         {
             return View(new AdvocacyViewModel()
             {
-                Organizations = GetOrganizationList(),
                 OddYears = GetYearList(2013, 2),
                 EvenYears = GetYearList(2014, 2),
                 Chambers = GetChamberList(),
@@ -478,27 +478,25 @@ namespace WhipStat.Controllers
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
             var chamber = model.Chamber == "0" ? "Member" : model.Chamber;
-            var org = RecordDb.Organizations.First(i => i.Id == model.Organization).Name;
-            HttpContext.Session.SetString(SessionKeyFileName, $"{chamber} Correlation - {org} ({model.From}-{model.To}).tsv");
+            var orgId = RecordDb.Organizations.First(i => i.Name == model.Organization).Id;
+            HttpContext.Session.SetString(SessionKeyFileName, $"{chamber} Correlation - {model.Organization} ({model.From}-{model.To}).tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
-            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetMemberLeaderboard(model.Organization, model.Chamber, model.From, model.To));
+            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetMemberLeaderboard(orgId, model.Chamber, model.From, model.To));
 
             // Serve up the download page and deliver file
             return View("Download");
         }
 
-        public List<SelectListItem> GetOrganizationList()
+        [HttpGet]
+        public string[] GetOrganizations()
         {
-            var list = new List<SelectListItem> { SelectPrompt };
-            var orgs = RecordDb.Organizations
+            return RecordDb.Organizations
                 .Join(RecordDb.Testimonies, i => i.Id, j => j.OrgId, (i, j) => i)
-                .Distinct().OrderBy(i => i.Name).Select(i => new SelectListItem(i.Name, i.Id.ToString()));
-            list.AddRange(orgs);
-            return list;
+                .Distinct().Select(i => i.Name).OrderBy(i => i).ToArray();
         }
 
         [HttpGet]
-        public DataTable GetBillRatings(int organization, short from, short to)
+        public DataTable GetBillRatings(string organization, short from, short to)
         {
             var dt = new DataTable
             {
@@ -514,59 +512,50 @@ namespace WhipStat.Controllers
                 p = new Dictionary<string, string>()
             };
 
-            var records = RecordDb.AdvocacyRecords.Where(i => i.Id == organization && i.Biennium.CompareTo($"{from}") > 0 && i.Biennium.CompareTo($"{to}") < 0)
-                .Join(RecordDb.Bills, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber }, (i, j) => new { i.Biennium, i.BillNumber, j.AbbrTitle, i.Sponsor, i.Votes, i.Support })
-                .Distinct().OrderBy(i => i.Biennium).ThenBy(i => i.BillNumber).ToList();
+            var org = RecordDb.Organizations.FirstOrDefault(i => i.Name == organization);
+            if (org != null)
+            {
+                var records = RecordDb.AdvocacyRecords.Where(i => i.Id == org.Id && i.Biennium.CompareTo($"{from}") > 0 && i.Biennium.CompareTo($"{to}") < 0)
+                    .Join(RecordDb.Bills, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber }, (i, j) => new { i.Biennium, i.BillNumber, j.AbbrTitle, i.Sponsor, i.Votes, i.Support })
+                    .Distinct().OrderBy(i => i.Biennium).ThenBy(i => i.BillNumber).ToList();
 
-            foreach (var record in records)
-                dt.rows.Add(new DataPointSet
-                {
-                    c = new DataPoint[] {
+                foreach (var record in records)
+                    dt.rows.Add(new DataPointSet
+                    {
+                        c = new DataPoint[] {
                     new DataPoint { v = record.Biennium },
                     new DataPoint { v = record.BillNumber.ToString() },
                     new DataPoint { v = record.AbbrTitle },
                     new DataPoint { v = record.Votes.ToString() },
                     new DataPoint { v = record.Sponsor.ToString() },
                     new DataPoint { v = $"{(double)record.Support / record.Votes:P0}" } }
-                });
+                    });
+            }
 
             return dt;
         }
 
         [HttpGet]
-        public DataTable GetVotingRecordDataTable(int organization, string chamber, short from, short to)
+        public DataTable GetVotingRecordDataTable(string organization, string chamber, short from, short to)
         {
             var points = new List<Point>();
-            var members = RecordDb.Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.Party).ToList();
-            var records = RecordDb.AdvocacyRecords.Where(i => i.Id == organization && i.Biennium.CompareTo($"{from}") > 0 && i.Biennium.CompareTo($"{to}") < 0)
-                .Join(RecordDb.VotingRecords, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber },
-                (i, j) => new { j.Id, j.Sponsor, j.Votes, j.Support, Count = i.Votes, Testify = i.Sponsor, Favor = i.Support }).ToList();
-
-            foreach (var member in members)
+            var org = RecordDb.Organizations.FirstOrDefault(i => i.Name == organization);
+            if (org != null)
             {
-                var tally = records.Where(i => i.Id == member.Id);
-                int n = tally.Count();
-                if (n > 0)
-                {
-                    // Compute the Pearson correlation coefficient
-                    //double sumX = 0, sumY = 0, sumX2 = 0, sumY2 = 0, sumXY = 0;
-                    //foreach (var i in tally)
-                    //{
-                    //    var x = (double)i.Support / i.Votes;
-                    //    var y = (double)i.Favor / i.Count;
-                    //    sumX += x;
-                    //    sumY += y;
-                    //    sumX2 += x * x;
-                    //    sumY2 += y * y;
-                    //    sumXY += x * y;
-                    //}
-                    //var stdX = Math.Sqrt(sumX2 / n - sumX * sumX / n / n);
-                    //var stdY = Math.Sqrt(sumY2 / n - sumY * sumY / n / n);
-                    //var covariance = sumXY / n - sumX * sumY / n / n;
-                    //var score = covariance / stdX / stdY * 100;
+                var members = RecordDb.Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.Party).ToList();
+                var records = RecordDb.AdvocacyRecords.Where(i => i.Id == org.Id && i.Biennium.CompareTo($"{from}") > 0 && i.Biennium.CompareTo($"{to}") < 0)
+                    .Join(RecordDb.VotingRecords, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber },
+                    (i, j) => new { j.Id, j.Sponsor, j.Votes, j.Support, Count = i.Votes, Testify = i.Sponsor, Favor = i.Support }).ToList();
 
-                    var score = tally.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count);   // Quick-n-dirty correlation!
-                    points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, "Correlation", score), Series = member.Party });
+                foreach (var member in members)
+                {
+                    var tally = records.Where(i => i.Id == member.Id);
+                    int n = tally.Count();
+                    if (n > 0)
+                    {
+                        var score = tally.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count);   // Quick-n-dirty correlation!
+                        points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, "Correlation", score), Series = member.Party });
+                    }
                 }
             }
 

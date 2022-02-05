@@ -21,7 +21,7 @@
                 <ul class="list-group">
                     <li class="list-group-item">
                         <h5 class="list-group-item-heading">Organization:</h5>
-                        <select asp-for="Organization" asp-items="Model.Organizations" class="w-100"></select>
+                        <input asp-for="Organization" class="form-control" placeholder="Type name here" />
                     </li>
                     <li class="list-group-item">
                         <h5 class="list-group-item-heading">Chamber:</h5>
@@ -91,29 +91,30 @@
 
             $.get("/Projects/GetVotingRecordDataTable/?" + $('form').serialize(), function (data) {
                 // Create our data table out of JSON data loaded from server.
-                var data = new google.visualization.DataTable(data);
+                if (data.rows.length > 0) {
+                    var data = new google.visualization.DataTable(data);
+                    // Get filter settings.
+                    var org = $("#Organization option:selected").text();
+                    var from = $("#From option:selected").text();
+                    var to = $("#To option:selected").text();
+                    var options = {
+                        title: org + " (" + from + "-" + to.slice(-2) + ")",
+                        height: 640,
+                        chartArea: { width: '80%', height: '80%' },
+                        legend: { position: 'bottom' },
+                        colors: ['#4285F4', '#DB4437'],
+                        dataOpacity: 0.8,
+                        pointSize: 10,
+                        animation: { duration: 1000, easing: 'out', startup: true },
+                        tooltip: { isHtml: true }
+                    }
 
-                // Get filter settings.
-                var org = $("#Organization option:selected").text();
-                var from = $("#From option:selected").text();
-                var to = $("#To option:selected").text();
-                var options = {
-                    title: org + " (" + from + "-" + to.slice(-2) + ")",
-                    height: 640,
-                    chartArea: { width: '80%', height: '80%' },
-                    legend: { position: 'bottom' },
-                    colors: ['#4285F4', '#DB4437'],
-                    dataOpacity: 0.8,
-                    pointSize: 10,
-                    animation: { duration: 1000, easing: 'out', startup: true },
-                    tooltip: { isHtml: true }
+                    // Instantiate and draw our chart, passing in some options.
+                    var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
+                    chart.draw(data, options);
+                    $("#Submit").show();
                 }
-
-                // Instantiate and draw our chart, passing in some options.
-                var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
-                chart.draw(data, options);
                 $("#Loading").hide();
-                $("#Submit").show();
                 loading = false;
             });
         }
@@ -140,19 +141,34 @@
             });
         }
 
-    </script>
-    <script>
-        $("select").change(function () {
+        function updatePage() {
             if (!loading) {
                 $("#Submit").hide();
                 $("#Loading").show();
                 drawChart();
                 createTable();
             }
-        }).change();
+        }
+
+    </script>
+    <script>
+        $("select").change(updatePage);
+
         $("#Download").click(function () {
             $("#Submit").hide();
             $("#Loading").show();
         }).change();
+
+        $.get("/Projects/GetOrganizations", function (data) {
+            $("#Organization").autocomplete({
+                source: data,
+                select: function(event, ui) {
+                    $("#Organization").val(ui.item.value);
+                    $("#Organization").select();
+                    updatePage();
+                }
+            });
+        });
+
     </script>
 }
