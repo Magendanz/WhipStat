@@ -13,6 +13,7 @@ using WhipStat.Models.PDC;
 using WhipStat.Models.LegTech;
 
 using static System.Net.Mime.MediaTypeNames;
+using System.Text;
 
 namespace WhipStat.DataAccess
 {
@@ -595,6 +596,29 @@ namespace WhipStat.DataAccess
             }
 
             return max >= threshold ? result : null;
+        }
+
+        public void GenerateMemberReports(string biennium, string chamber, string party)
+        {
+            Console.WriteLine($"Retrieving {chamber} members for {biennium} biennium...");
+            var members = LwsAccess.GetMembers(biennium).Where(i => i.Party == party && i.Agency == chamber).ToList();
+            foreach (var member in members)
+            {
+                Console.WriteLine($"Generating report for {member.LongName}...");
+                var sb = new StringBuilder();
+                var records = VotingRecords.Where(i => i.Id == member.Id)
+                    .Join(AdvocacyRecords, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber },
+                    (i, j) => new { j.Id, Count = i.Votes, Favor = i.Support, j.Votes, j.Support}).ToList();
+
+                sb.AppendLine("Organization\tCount\tCorrelation");
+                var orgs = records.GroupBy(i => i.Id).Join(Organizations, i => i.Key, j => j.Id,
+                    (i, j) => new { j.Name, Count = i.Count(), Score = i.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count) });
+
+                foreach (var org in orgs.OrderByDescending(i => i.Score).ThenBy(j => j.Name))
+                    sb.AppendLine($"{org.Name}\t{org.Count}\t{org.Score:N1}");
+
+                File.WriteAllText($"{member.Name}.tsv", sb.ToString());
+            }
         }
 
         public static void GetAVStats(string biennium, params int[] bills)

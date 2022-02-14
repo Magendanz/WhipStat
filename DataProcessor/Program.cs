@@ -22,8 +22,8 @@ namespace DataProcessor
                 //db.GetTestimony(2014, 2021);
                 //db.ImportTestimony("2021_H&S_exportTestifiers.csv");
                 //db.GetOrganizations();
-                db.MatchOrganizations();
-                db.ScoreAdvocacyRecords();
+                //db.MatchOrganizations();
+                //db.ScoreAdvocacyRecords();
                 //db.ScoreVotingRecords();
                 //db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
             }
@@ -31,6 +31,7 @@ namespace DataProcessor
             using (var db = new RecordDbContext())
             {
                 //db.GetAVStats("2019-20", 5395, 5323, 5628, 6492, 6690, 8212);
+                //db.GenerateMemberReports("2021-22", "Senate", "R");
             }
 
             using (var db = new DonorDbContext())
