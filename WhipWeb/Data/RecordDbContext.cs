@@ -39,7 +39,6 @@ namespace WhipStat.Data
             modelBuilder.Entity<Bill>().HasKey(t => new { t.BillId, t.Biennium });
             modelBuilder.Entity<Vote>().HasKey(t => new { t.RollCallId, t.MemberId });
             modelBuilder.Entity<Score>().HasKey(t => new { t.MemberId, t.Year, t.PolicyArea });
-            modelBuilder.Entity<Testimony>().HasKey(t => new { t.LastName, t.FirstName, t.TimeSignedIn });
             modelBuilder.Entity<AdvocacyRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
             modelBuilder.Entity<VotingRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
         }

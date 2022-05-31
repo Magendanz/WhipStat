@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.ComponentModel.DataAnnotations;
 
@@ -21,7 +20,7 @@ namespace WhipStat.Models.LWS
         [DataMember(IsRequired = true, Order = 5)]
         public string Party { get; set; }
         [DataMember(IsRequired = true, Order = 6)]
-        public Int16 District { get; set; }
+        public short District { get; set; }
         [DataMember(Order = 7)]
         public string Phone { get; set; }
         [DataMember(Order = 8)]

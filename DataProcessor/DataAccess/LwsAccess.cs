@@ -87,7 +87,9 @@ namespace WhipStat.DataAccess
         {
             var response = GetResponse(requestUri);
             var xmlSer = new DataContractSerializer(typeof(List<T>));
-            return xmlSer.ReadObject(response.Content.ReadAsStreamAsync().Result) as List<T>;
+            var stream = response.Content.ReadAsStreamAsync().Result;
+            var str = response.Content.ReadAsStringAsync().Result;
+            return xmlSer.ReadObject(stream) as List<T>;
         }
 
         static public HttpResponseMessage GetResponse(string requestUri)

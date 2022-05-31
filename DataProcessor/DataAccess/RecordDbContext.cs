@@ -12,8 +12,9 @@ using WhipStat.Helpers;
 using WhipStat.Models.PDC;
 using WhipStat.Models.LegTech;
 
-using static System.Net.Mime.MediaTypeNames;
 using System.Text;
+using System.Numerics;
+using System.Text.RegularExpressions;
 
 namespace WhipStat.DataAccess
 {
@@ -41,6 +42,7 @@ namespace WhipStat.DataAccess
             builder.AddUserSecrets<RecordDbContext>();
             var configuration = builder.Build();
             optionsBuilder.UseSqlServer(configuration["RecordDb:SqlConnectionString"]);
+            optionsBuilder.EnableSensitiveDataLogging();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -48,7 +50,6 @@ namespace WhipStat.DataAccess
             modelBuilder.Entity<Bill>().HasKey(t => new { t.BillId, t.Biennium });
             modelBuilder.Entity<Vote>().HasKey(t => new { t.RollCallId, t.MemberId });
             modelBuilder.Entity<Score>().HasKey(t => new { t.MemberId, t.Year, t.PolicyArea });
-            modelBuilder.Entity<Testimony>().HasKey(t => new { t.LastName, t.FirstName, t.TimeSignedIn });
             modelBuilder.Entity<AdvocacyRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
             modelBuilder.Entity<VotingRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
         }
@@ -63,7 +64,7 @@ namespace WhipStat.DataAccess
             {
                 Console.WriteLine($"Retrieving members for {biennium} biennium...");
                 foreach (var member in LwsAccess.GetMembers(biennium))
-                    if (!String.IsNullOrWhiteSpace(member.Party))
+                    if (!string.IsNullOrWhiteSpace(member.Party))
                         members.Add(member);
             }
 
@@ -150,15 +151,15 @@ namespace WhipStat.DataAccess
             => LwsAccess.GetLegislation(bill.Biennium, bill.BillNumber).First(i => i.BillId == bill.BillId).ShortDescription;
 
         private static string GetSponsors(Bill bill)
-            => String.Join(",", LwsAccess.GetSponsors(bill.Biennium, bill.BillId).Select(i => i.Acronym));
+            => string.Join(",", LwsAccess.GetSponsors(bill.Biennium, bill.BillId).Select(i => i.Acronym));
 
         private static string GetCommittees(Bill bill)
         {
-            var list = new List<String>();
-            foreach (var hearing in LwsAccess.GetHearings(bill.Biennium, bill.BillNumber).ToList())
+            var list = new List<string>();
+            foreach (var hearing in LwsAccess.GetHearings(bill.Biennium, bill.BillNumber))
                 list.AddRange(hearing.CommitteeMeeting.Committees.Select(i => i.Acronym));
 
-            return String.Join(",", list.Distinct());
+            return string.Join(",", list.Distinct());
         }
 
         private static PolicyArea GetBestPolicyArea(Bill bill, List<PolicyArea> areas)
@@ -373,7 +374,7 @@ namespace WhipStat.DataAccess
                                     OutOfTown = t.OutOfTown,
                                     CalledUp = t.CalledUp,
                                     NoShow = t.NoShow,
-                                    TimeSignedIn = t.TimeOfSignIn
+                                    MeetingDate = t.TimeOfSignIn
                                 });
                     }
                     catch { }
@@ -384,37 +385,83 @@ namespace WhipStat.DataAccess
                 SaveChanges();
             }
         }
+
+        public void ImportTestimonyDir(string path)
+        {
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Testimonies");
+
+            var files = Directory.EnumerateFiles(path, "*.csv", SearchOption.AllDirectories);
+            foreach (var file in files)
+                ImportTestimony(file);
+        }
+
         public void ImportTestimony(string path)
         {
-            var test = new HashSet<Testimony>();
+            var test = new List<Testimony>();
             var table = DataTable.New.ReadCsv(path);
+            var agency = path.Contains("House", StringComparison.InvariantCultureIgnoreCase) ? "House"
+                : path.Contains("Senate", StringComparison.InvariantCultureIgnoreCase) ? "Senate" : null;
             int count = table.NumRows, i = 0;
 
-            Console.Write($"Importing CSV...");
+            Console.Write($"Importing {Path.GetFileName(path)}...");
             foreach (var row in table.Rows)
             {
+                for (int j = 0; j < row.Values.Count; j ++)
+                {
+                    if (row.Values[j] == "NULL")
+                        row.Values[j] = null;
+                }
                 var record = new Testimony
                 {
-                    LastName = row["LastName"].ToTitleCase().Trim(64),
-                    FirstName = row["FirstName"].ToTitleCase().Trim(64),
-                    Organization = row["Organization"].ToTitleCase().Trim(256),
-                    Street = row["Street"].ToTitleCase().Trim(64),
-                    City = row["City"].ToTitleCase().Trim(32),
-                    State = row["State"].ToUpperInvariant().Trim(2),
-                    Zip = row["Zip"].Trim(10),
-                    Email = row["Email"].ToLowerInvariant().Trim(64),
-                    Phone = row["Phone"].ToNumeric().Trim(16),
-                    BillId = row["BillId"].ToUpperInvariant().Trim(16),
-                    Position = row["Position"].ToTitleCase().Trim(16),
-                    Testify = row["Testify"] == "Yes",
-                    OutOfTown = row["OutOfTown"] == "Yes",
-                    CalledUp = row["CalledUp"] == "Yes",
-                    NoShow = row["NoShow"] == "Yes",
-                    TimeSignedIn = DateTime.Parse(row["TimeSignedIn"])
+                    LastName = GetByNames(row, "LastName", "Last Name")?.ToTitleCase().Trim(64),
+                    FirstName = GetByNames(row, "FirstName", "First Name")?.ToTitleCase().Trim(64),
+                    Organization = row["Organization"]?.ToTitleCase().Trim(256),
+                    Street = row["Street"]?.ToTitleCase().Trim(64),
+                    City = row["City"]?.ToTitleCase().Trim(32),
+                    State = row["State"]?.ToUpperInvariant().Trim(2),
+                    Zip = row["Zip"]?.Trim(10),
+                    Phone = GetByNames(row, "Phone", "PhoneNumber")?.ToPhoneNumber().Trim(32),
+                    Email = row["Email"]?.ToLowerInvariant().Trim(64),
+                    Agency = agency,
+                    CommitteeName = row["CommitteeName"]?.Trim(32),
+                    AbbrTitle = GetByNames(row, "AgendaItem", "AbbrTitle")?.ToTitleCase().Trim(64),
+                    BillId = GetByNames(row, "BillId", "BillNumber")?.ToUpperInvariant().Trim(16),
+                    Position = row["Position"]?.ToTitleCase().Trim(16),
+                    Testify = GetBoolByNames(row, "Testify"),
+                    OutOfTown = GetBoolByNames(row, "OutOfTown", "IsOutOfTown"),
+                    CalledUp = GetBoolByNames(row, "CalledUp"),
+                    NoShow = GetBoolByNames(row, "NoShow", "NotPresent")
                 };
-                while (!test.Add(record))
-                    record.TimeSignedIn = record.TimeSignedIn.AddSeconds(1);
 
+                if (string.IsNullOrWhiteSpace(record.LastName) || string.IsNullOrWhiteSpace(record.FirstName))
+                    continue;
+
+                // Now, fill in some of our missing properties
+                if (!string.IsNullOrWhiteSpace(record.BillId))
+                {
+                    record.BillId = KeywordParser.Filter(record.BillId);
+                    if (short.TryParse(record.BillId[^4..], out var num))
+                        record.BillNumber = num;
+                }
+                else if (!string.IsNullOrWhiteSpace(record.AbbrTitle))
+                {
+                    var matches = Regex.Match(record.AbbrTitle, @"^([HSBE]{1,4}B\s\d{4})\s(.+)$");
+                    if (matches.Success)
+                    {
+                        record.BillId = matches.Groups[1].Value;
+                        if (short.TryParse(record.BillId[^4..], out var num))
+                            record.BillNumber = num;
+                        record.AbbrTitle = matches.Groups[2].Value;
+                    }
+                }
+
+                var date = GetByNames(row, "MeetingDate", "StartTime", "TimeSignedIn");
+                if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var result))
+                    record.MeetingDate = result;
+                var end = (record.MeetingDate.Year + 1) / 2 * 2;
+                record.Biennium = $"{end - 1:D4}-{end % 100:D2}";
+
+                test.Add(record);
                 ReportProgress((double)++i / count);
             }
 
@@ -422,11 +469,80 @@ namespace WhipStat.DataAccess
             Testimonies.AddRange(test);
             SaveChanges();
         }
+        
+        public void FixupTestimony(string path)
+        {
+            var lines = File.ReadAllLines(path, Encoding.Latin1);
+            var cols = lines[0].Split(',');
+
+            int iLastName = Array.IndexOf(cols, "LastName");
+            int iTimeSignedIn = Array.IndexOf(cols, "TimeSignedIn");
+            int iStreet = Array.IndexOf(cols, "Street");
+            int iCity= Array.IndexOf(cols, "City");
+            int iZip = Array.IndexOf(cols, "Zip");
+            int iExtra = Array.FindIndex(cols, val => string.IsNullOrEmpty(val));
+            var pattern = "\"([^\"]*)\"";
+
+            Console.WriteLine("Reading addresses...\n");
+            var addresses = DataTable.New.ReadCsv(@"C:\Users\Chad\Projects\WhipStat\Datasets\LegTech\297-042021_Final_Production\Combined\2021_H&S_exportTestifiers.csv");
+
+            // Targeted search and replace
+            Console.WriteLine("Fixing up records...\n");
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var values = Regex.Replace(lines[i], pattern, string.Empty).Split(',');
+                if (values[iLastName].Trim() == string.Empty && !string.IsNullOrWhiteSpace(values[iExtra]))
+                {
+                    // LastName field is empty
+                    for (int j = iLastName; j < values.Length - 1; j++)
+                        values[j] = values[j + 1];
+                    values[values.Length - 1] = string.Empty;
+
+                    var previous = Regex.Replace(lines[i - 1], pattern, string.Empty).Split(',');
+                    values[iTimeSignedIn] = previous[iTimeSignedIn];
+                    lines[i] = string.Join(',', values);
+                }
+                if (values[iZip].Contains('/'))
+                {
+                    // Bad zip code
+                    values[iZip] = string.Empty;
+                    foreach (var row in addresses.Rows)
+                    {
+                        if (row["LastName"].Equals(values[iLastName], StringComparison.OrdinalIgnoreCase) 
+                            && row["Street"].Equals(values[iStreet], StringComparison.OrdinalIgnoreCase)
+                            && !string.IsNullOrEmpty(row["Zip"]) && row["Zip"].Length == 5)
+                        {
+                            values[iZip] = row["Zip"];
+                            break;
+                        }
+                    }
+                    lines[i] = string.Join(',', values);
+                }
+            }
+            File.WriteAllLines(path, lines, Encoding.Latin1);
+        }
+
+        private string GetByNames(Row row, params string[] names)
+        {
+            foreach (var name in names)
+            {
+                if (row.ColumnNames.Contains(name) && !string.IsNullOrWhiteSpace(row[name]))
+                    return row[name];
+            }
+            return null;
+        }
+
+        private bool GetBoolByNames(Row row, params string[] names)
+        {
+            var value = GetByNames(row, names)?.ToLower();
+            return value == "yes" || value == "true" || value == "1";
+        }
 
         public void GetOrganizations()
         {
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Organizations");
 
+            Console.WriteLine("Loading organizaitons from PDC...\n");
             var orgs = new HashSet<Organization>();
             var employers = PdcAccess.GetEmployers().OrderByDescending(i => i.employment_year).ThenBy(i => i.employer_name);
             var groups = employers.GroupBy(i => i.employer_id);
@@ -463,16 +579,6 @@ namespace WhipStat.DataAccess
             Console.Write("Matching organizations...");
             foreach (var testimony in testimonies)
             {
-                // First, fill in some of our missing properties
-                var end = (testimony.TimeSignedIn.Year + 1) / 2 * 2;
-                testimony.Biennium = $"{end - 1}-{end % 100}";
-                if (!string.IsNullOrWhiteSpace(testimony.BillId))
-                {
-                    testimony.BillId = KeywordParser.Filter(testimony.BillId);
-                    if (short.TryParse(testimony.BillId[^4..], out var billId))
-                        testimony.BillNumber = billId;
-                }
-
                 testimony.OrgId = null;
                 // Look for a matching organization
                 if (!string.IsNullOrWhiteSpace(testimony.Organization))

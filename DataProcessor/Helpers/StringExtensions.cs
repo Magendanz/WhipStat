@@ -67,7 +67,7 @@ namespace WhipStat.Helpers
             => string.IsNullOrEmpty(str) ? null : str.Length <= maxLength ? str : str[..maxLength];
 
         public static string ToSentenceCase(this string str)
-            => string.IsNullOrEmpty(str) ? str : ti.ToUpper(str[0]) + ti.ToLower(str[1..]);
+            => string.IsNullOrWhiteSpace(str) ? str : ti.ToUpper(str[0]) + ti.ToLower(str[1..]);
 
         public static string ToAlphaNumeric(this string str)
             => new string(str.Where(char.IsLetterOrDigit).ToArray());
@@ -127,7 +127,7 @@ namespace WhipStat.Helpers
                     if (str.Length == 10)
                         return num.ToString("(###) ###-####");
                     if (str.Length > 10)
-                        return num.ToString("(###) ###-#### x" + new String('#', (str.Length - 10)));
+                        return num.ToString("(###) ###-#### x" + new string('#', (str.Length - 10)));
                 }
             }
 
@@ -139,6 +139,9 @@ namespace WhipStat.Helpers
 
         public static bool IsLower(this string str)
             => !str.Any(i => char.IsUpper(i));
+
+        public static bool IsValidPhoneNumber(this string str)
+            => Regex.IsMatch(str, @"^(\+0?1\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$");
 
         public static bool IsValidEmail(this string str)
             => Regex.IsMatch(str, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");

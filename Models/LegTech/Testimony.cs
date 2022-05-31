@@ -1,9 +1,14 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WhipStat.Models.LegTech
 {
     public class Testimony
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Organization { get; set; }
@@ -15,22 +20,18 @@ namespace WhipStat.Models.LegTech
         public string Email { get; set; }
         public string Phone { get; set; }
         public string Biennium { get; set; }
-        public string CommitteeName { get; set; }
         public string Agency { get; set; }
-        public string AgendaItem { get; set; }
+        public string CommitteeName { get; set; }
+        public DateTime MeetingDate { get; set; }
         public string BillId { get; set; }
         public short? BillNumber { get; set; }
+        public string AbbrTitle { get; set; }
         public string Position { get; set; }
         public bool Testify { get; set; }
         public bool OutOfTown { get; set; }
         public bool CalledUp { get; set; }
         public bool NoShow { get; set; }
-        public DateTime TimeSignedIn { get; set; }
 
         public override string ToString() => $"{LastName}, {FirstName}";
-        public override bool Equals(Object obj)
-            => obj is Testimony t && (LastName, FirstName, TimeSignedIn).Equals((t.LastName, t.FirstName, t.TimeSignedIn));
-        public override int GetHashCode()
-            => (LastName, FirstName, TimeSignedIn).GetHashCode();
     }
 }

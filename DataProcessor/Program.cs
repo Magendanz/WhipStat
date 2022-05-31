@@ -19,8 +19,9 @@ namespace DataProcessor
                 //db.GetRollCalls();
                 //db.ScoreBills();
                 //db.ScoreMembers();
-                //db.GetTestimony(2014, 2021);
-                //db.ImportTestimony("2021_H&S_exportTestifiers.csv");
+                //db.GetTestimony(2014, 2021);  // Obsolete
+                //db.ImportTestimonyDir(@"C:\Users\Chad\Projects\WhipStat\Datasets\LegTech\CSI Testifier Data");
+                //db.FixupTestimony(@"C:\Users\Chad\Projects\WhipStat\Datasets\LegTech\CSI Testifier Data\House\CSI Testfier Data 2022.csv");
                 //db.GetOrganizations();
                 //db.MatchOrganizations();
                 //db.ScoreAdvocacyRecords();

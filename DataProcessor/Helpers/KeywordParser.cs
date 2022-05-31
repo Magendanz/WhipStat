@@ -16,7 +16,7 @@ namespace WhipStat.Helpers
             // Load optional dictionary with abbreviations, aliases and nicknames
             dictionary = string.IsNullOrEmpty(path) ? null : File.ReadAllLines(path)
                 .Select(i => i.Split(','))
-                .Select(j => new KeyValuePair<string, string>($" {j[0]} ", $" {j[1]}"))
+                .Select(j => new KeyValuePair<string, string>($" {j[0]} ", $" {j[1]} "))
                 .ToArray();
         }
 
