@@ -20,7 +20,7 @@ namespace WhipStat.Models.LWS
         [DataMember(IsRequired = true, Order = 5)]
         public string Party { get; set; }
         [DataMember(IsRequired = true, Order = 6)]
-        public short District { get; set; }
+        public string District { get; set; }
         [DataMember(Order = 7)]
         public string Phone { get; set; }
         [DataMember(Order = 8)]

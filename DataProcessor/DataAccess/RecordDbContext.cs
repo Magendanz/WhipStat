@@ -704,8 +704,11 @@ namespace WhipStat.DataAccess
             return max >= threshold ? result : null;
         }
 
-        public void GenerateMemberReports(string biennium, string chamber, string party)
+        public void GenerateMemberReports(string biennium, string chamber, string party, short start)
         {
+            Console.WriteLine($"Retrieving lobbyist employer summaries...");
+            var summaries = PdcAccess.GetEmployerSummaries();
+
             Console.WriteLine($"Retrieving {chamber} members for {biennium} biennium...");
             var members = LwsAccess.GetMembers(biennium).Where(i => i.Party == party && i.Agency == chamber).ToList();
             foreach (var member in members)
@@ -716,12 +719,15 @@ namespace WhipStat.DataAccess
                     .Join(AdvocacyRecords, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber },
                     (i, j) => new { j.Id, Count = i.Votes, Favor = i.Support, j.Votes, j.Support}).ToList();
 
-                sb.AppendLine("Organization\tCount\tCorrelation");
+                sb.AppendLine("Organization\tCount\tCorrelation\tContributions");
                 var orgs = records.GroupBy(i => i.Id).Join(Organizations, i => i.Key, j => j.Id,
-                    (i, j) => new { j.Name, Count = i.Count(), Score = i.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count) });
+                    (i, j) => new { j.Id, j.Name, Count = i.Count(), Score = i.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count) });
 
                 foreach (var org in orgs.OrderByDescending(i => i.Score).ThenBy(j => j.Name))
-                    sb.AppendLine($"{org.Name}\t{org.Count}\t{org.Score:N1}");
+                {
+                    var total = summaries.Where(i => i.employer_nid == org.Id.ToString() && i.year > start).Sum(j => j.political);
+                    sb.AppendLine($"{org.Name}\t{org.Count}\t{org.Score:N1}\t{total:C}");
+                }
 
                 File.WriteAllText($"{member.Name}.tsv", sb.ToString());
             }

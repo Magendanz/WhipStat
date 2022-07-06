@@ -32,7 +32,7 @@ namespace DataProcessor
             using (var db = new RecordDbContext())
             {
                 //db.GetAVStats("2019-20", 5395, 5323, 5628, 6492, 6690, 8212);
-                //db.GenerateMemberReports("2021-22", "Senate", "R");
+                //db.GenerateMemberReports("2021-22", "House", "R", 2014);
             }
 
             using (var db = new DonorDbContext())
