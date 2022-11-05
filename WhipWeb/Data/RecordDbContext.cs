@@ -69,7 +69,7 @@ namespace WhipStat.Data
                 .Join(VotingRecords, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber },
                 (i, j) => new { j.Id, j.Sponsor, j.Votes, j.Support, Count = i.Votes, Testify = i.Sponsor, Favor = i.Support }).ToList();
 
-            sb.AppendLine("Last Name\tFirst Name\tDistrict\tParty\tCorrelation");
+            sb.AppendLine("Last Name\tFirst Name\tDistrict\tChamber\tParty\tCount\tCorrelation");
             foreach (var member in members)
             {
                 var tally = records.Where(i => i.Id == member.Id);
@@ -77,7 +77,7 @@ namespace WhipStat.Data
                 if (n > 0)
                 {
                     var score = tally.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count);
-                    sb.AppendLine($"{member.LastName}\t{member.FirstName}\t{member.District}\t{member.Party}\t{score:N1}");
+                    sb.AppendLine($"{member.LastName}\t{member.FirstName}\t{member.District}\t{member.Agency}\t{member.Party}\t{n}\t{score:N1}");
                 }
             }
             return sb.ToString();

@@ -31,8 +31,9 @@ namespace DataProcessor
 
             using (var db = new RecordDbContext())
             {
-                //db.GetAVStats("2019-20", 5395, 5323, 5628, 6492, 6690, 8212);
+                //db.GetAVStats("2021-22", 5974, 2076);
                 //db.GenerateMemberReports("2021-22", "House", "R", 2014);
+                //db.BiparisanBillSponsorship();
             }
 
             using (var db = new DonorDbContext())

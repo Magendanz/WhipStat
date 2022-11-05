@@ -733,7 +733,7 @@ namespace WhipStat.DataAccess
             }
         }
 
-        public static void GetAVStats(string biennium, params int[] bills)
+        public void GetAVStats(string biennium, params int[] bills)
         {
             var members = LwsAccess.GetMembers(biennium);
 
@@ -768,6 +768,40 @@ namespace WhipStat.DataAccess
                 Console.WriteLine($"Rep. Ramos: {finalHouse.Votes.First(i => i.Name == "Ramos").VOte}");
                 Console.WriteLine($"Rep. Callan: {finalHouse.Votes.First(i => i.Name == "Callan").VOte}");
                 Console.WriteLine();
+            }
+        }
+
+        public void BiparisanBillSponsorship()
+        {
+            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
+
+            foreach (var biennium in biennia)
+            {
+                Console.WriteLine($"Analyzing biennium {biennium}...");
+                var members = LwsAccess.GetMembers(biennium);
+                var tally = new Dictionary<string, short>();
+
+                foreach (var bill in Bills.Where(i => i.Biennium == biennium).ToArray())
+                {
+                    var sponsors = bill.Sponsors.Split(',');
+                    var party = members.FirstOrDefault(i => i.Acronym == sponsors[0])?.Party;
+                    if (party != null)
+                    {
+                        foreach (var member in members)
+                        {
+                            if (party != member.Party && sponsors.Contains(member.Acronym))
+                            {
+                                if (!tally.ContainsKey(member.Name))
+                                    tally.Add(member.Name, 0);
+                                tally[member.Name]++;
+                            }
+                        }
+                    }
+                }
+
+                var ranking = tally.OrderByDescending(i => i.Value).ToArray();
+                foreach (var item in ranking)
+                    Console.WriteLine($"  {item.Key} - {item.Value}");
             }
         }
 

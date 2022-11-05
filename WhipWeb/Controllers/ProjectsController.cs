@@ -236,8 +236,8 @@ namespace WhipStat.Controllers
             return View(new RecordsViewModel()
             {
                 Areas = GetPolicyAreaList(),
-                OddYears = GetYearList(2003, 2),
-                EvenYears = GetYearList(2004, 2),
+                OddYears = GetYearList(1991, 2),
+                EvenYears = GetYearList(1992, 2),
                 Chambers = GetChamberList(),
                 From = 2013,
                 To = 2022
@@ -515,7 +515,7 @@ namespace WhipStat.Controllers
             var org = RecordDb.Organizations.FirstOrDefault(i => i.Name == organization);
             if (org != null)
             {
-                var records = RecordDb.AdvocacyRecords.Where(i => i.Id == org.Id && i.Biennium.CompareTo($"{from}") > 0 && i.Biennium.CompareTo($"{to}") < 0)
+                var records = RecordDb.AdvocacyRecords.Where(i => i.Id == org.Id && i.Biennium.CompareTo($"{from}") >= 0 && i.Biennium.CompareTo($"{to}") <= 0)
                     .Join(RecordDb.Bills, i => new { Y = i.Biennium, N = i.BillNumber }, j => new { Y = j.Biennium, N = j.BillNumber }, (i, j) => new { i.Biennium, i.BillNumber, j.AbbrTitle, i.Sponsor, i.Votes, i.Support })
                     .Distinct().OrderBy(i => i.Biennium).ThenBy(i => i.BillNumber).ToList();
 
