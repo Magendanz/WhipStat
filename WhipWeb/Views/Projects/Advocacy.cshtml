@@ -92,7 +92,7 @@
             $.get("/Projects/GetVotingRecordDataTable/?" + $('form').serialize(), function (data) {
                 // Create our data table out of JSON data loaded from server.
                 if (data.rows.length > 0) {
-                    var data = new google.visualization.DataTable(data);
+                    var dt = new google.visualization.DataTable(data);
                     // Get filter settings.
                     var org = $("#Organization option:selected").text();
                     var from = $("#From option:selected").text();
@@ -111,8 +111,32 @@
 
                     // Instantiate and draw our chart, passing in some options.
                     var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
-                    chart.draw(data, options);
+                    google.visualization.events.addListener(chart, 'animationfinish', drawMedianValues);
+                    chart.draw(dt, options);
                     $("#Submit").show();
+
+                    function drawMedianValues() {
+                        var cli = chart.getChartLayoutInterface();
+                        var area = cli.getChartAreaBoundingBox();
+                        var svg = chart.getContainer().getElementsByTagName('svg')[0];
+                        for (i = 0; i < 2; i++) {
+                            var p = dt.getColumnProperties(i * 2 + 1);
+                            var x = cli.getXLocation(p.median)
+                            svg.appendChild(createLine(x, area.top + area.height, x, area.top, options.colors[i], 0.3, 5));
+                        }
+                    }
+
+                    function createLine(x1, y1, x2, y2, color, opacity, width) {
+                        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x1);
+                        line.setAttribute('y1', y1);
+                        line.setAttribute('x2', x2);
+                        line.setAttribute('y2', y2);
+                        line.setAttribute('stroke', color);
+                        line.setAttribute('stroke-opacity', opacity);
+                        line.setAttribute('stroke-width', width);
+                        return line;
+                    }
                 }
                 $("#Loading").hide();
                 loading = false;
@@ -150,8 +174,6 @@
             }
         }
 
-    </script>
-    <script>
         $("select").change(updatePage);
 
         $("#Download").click(function () {
