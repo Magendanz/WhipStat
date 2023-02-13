@@ -10,8 +10,10 @@
         </div>
         <div id="List">
             <table class="table" id="Bills">
-
             </table>
+            <h5 style="text-align:center;color:gray" id="Instructions">
+                Select an organization from the list to continue.
+            </h5>
         </div>
     </div>
     <div class="col-md-4">
@@ -113,6 +115,7 @@
                     var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
                     google.visualization.events.addListener(chart, 'animationfinish', drawMedianValues);
                     chart.draw(dt, options);
+                    $("#Instructions").hide();
                     $("#Submit").show();
 
                     function drawMedianValues() {
