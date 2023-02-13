@@ -7,7 +7,7 @@ namespace WhipStat.Models.Elections
     public class Result
     {
         [Key]
-        public int ID { get; set; }
+        public int Id { get; set; }
         public short? Year { get; set; }
         public string Election { get; set; }
         public string PrecinctName { get; set; }

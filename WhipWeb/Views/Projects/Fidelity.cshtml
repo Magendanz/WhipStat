@@ -1,24 +1,26 @@
-@model WhipStat.Models.ProjectViewModels.RecordsViewModel
-<h2>Voting Records</h2>
+﻿@model WhipStat.Models.ProjectViewModels.FidelityViewModel
+<h2>Constituent Fidelity</h2>
 
 <div class="row">
     <div class="col-md-8">
-        <h3>Partisan Distribution of WA Legislature:</h3>
         <div id="Chart">
             <div class="mx-auto" style="opacity:0.2; width: 40%; margin-top: 200px;">
                 <img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
             </div>
         </div>
+        <div id="List">
+            <table class="table" id="Measures">
+            </table>
+            <h5 style="text-align:center;color:gray" id="Instructions">
+                Click on individual members to review their voting records.
+            </h5>
+        </div>
     </div>
     <div class="col-md-4">
         <section>
             <h3>Filters:</h3>
-            <form asp-controller="Projects" asp-action="Records" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
+            <form asp-controller="Projects" asp-action="Fidelity" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
                 <ul class="list-group">
-                    <li class="list-group-item">
-                        <h5 class="list-group-item-heading">Policy Area:</h5>
-                        <select asp-for="Area" asp-items="Model.Areas"></select>
-                    </li>
                     <li class="list-group-item">
                         <h5 class="list-group-item-heading">Chamber:</h5>
                         <select asp-for="Chamber" asp-items="Model.Chambers"></select>
@@ -49,10 +51,7 @@
         <section>
             <h3>Methodology:</h3>
             <p>
-                The partisanship score for each floor vote is calculated as the percentage of Republican supporters minus the percentage of Democrat supporters, giving each a range from 100 (exclusively Republican) to -100 (exclusively Democrat) with unanimous votes scoring zero.
-            </p>
-            <p>
-                The member's aggregate score is just the average of all the scores of floor votes they supported, minus the scores from those they opposed.
+                A member's constituent fidelity rating is simply the percentage of the cases where they voted with their district on legislation referred to the ballot.
             </p>
         </section>
         <section>
@@ -61,8 +60,7 @@
                 More information is available at the sites below:
             </p>
             <ul>
-                <li><a href="https://blog.voter-science.com/2017/04/11/analyzing-the-wa-political-spectrum/">VS Blog - Analyzing the WA Political Spectrum</a></li>
-                <li><a href="https://legtracker.voter-science.com/">Voter Science Bill Tracker</a></li>
+                <li><a href="https://www.sos.wa.gov/elections/research/election-results-and-voters-pamphlets.aspx">WA Secretary of State Election Results</a></li>
                 <li><a href="http://wslwebservices.leg.wa.gov/">WA Legislative Web Services</a></li>
             </ul>
         </section>
@@ -86,17 +84,15 @@
         // draws it.
         function drawChart() {
 
-            $.get("/Projects/GetMemberDataTable/?" + $('form').serialize(), function (data) {
+            $.get("/Projects/GetFidelityDataTable/?" + $('form').serialize(), function (data) {
                 // Create our data table out of JSON data loaded from server.
                 var dt = new google.visualization.DataTable(data);
-
                 // Get filter settings.
-                var area = $("#Area option:selected").text();
                 var chamber = $("#Chamber option:selected").text();
                 var from = $("#From option:selected").text();
                 var to = $("#To option:selected").text();
                 var options = {
-                    title: area + ", " + chamber + " (" + from + "-" + to.slice(-2) + ")",
+                    title: chamber + " (" + from + "-" + to.slice(-2) + ")",
                     height: 640,
                     chartArea: { width: '80%', height: '80%' },
                     legend: { position: 'bottom' },
@@ -108,12 +104,21 @@
                 }
 
                 // Instantiate and draw our chart, passing in some options.
-                var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
+                chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
                 google.visualization.events.addListener(chart, 'animationfinish', drawMedianValues);
+                google.visualization.events.addListener(chart, 'select', selectHandler);
                 chart.draw(dt, options);
+                $("#Measures").empty();
                 $("#Loading").hide();
                 $("#Submit").show();
+                $("#Instructions").show();
                 loading = false;
+                
+                function selectHandler() {
+                    var item = chart.getSelection()[0];
+                    var id = dt.getProperty(item.row, item.column, "id");
+                    drawTable(id);
+                }
 
                 function drawMedianValues() {
                     var cli = chart.getChartLayoutInterface();
@@ -137,6 +142,28 @@
                     line.setAttribute('stroke-width', width);
                     return line;
                 }
+            });
+        }
+
+        function drawTable(id) {
+            $("#Measures").empty();
+            $.get("/Projects/GetBallotMeasures/?member=" + id + "&" + $('form').serialize(), function (data) {
+                var thead = $("<thead/>");
+                var tr = $("<tr>");
+                $.each(data.cols, function (key, col) {
+                    tr.append($("<th>").text(col.label));
+                });
+                thead.append(tr);
+                var tbody = $("<tbody/>");
+                $.each(data.rows, function (key, row) {
+                    var tr = $("<tr>");
+                    $.each(row.c, function (key, cell) {
+                        tr.append($("<td>").text(cell.v));
+                    });
+                    tbody.append(tr);
+                });
+                $("#Measures").append(thead, tbody);
+                $("#Instructions").hide();
             });
         }
 

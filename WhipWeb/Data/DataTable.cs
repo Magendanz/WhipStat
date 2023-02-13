@@ -33,11 +33,13 @@ namespace WhipStat.Data
     {
         public string v { get; set; }   // Value
         public string f { get; set; }   // Format
+        public Dictionary<string, string> p { get; set; }   // Cell-level properties
     }
 
     // Interal point object for stacked ScatterChart
     public class Point
     {
+        public int Id { get; set; }
         public double x { get; set; }
         public double y { get; set; }
         public string Label { get; set; }

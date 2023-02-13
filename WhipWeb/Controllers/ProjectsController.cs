@@ -304,7 +304,7 @@ namespace WhipStat.Controllers
                 if (count > 10)
                 {
                     var score = total / count;
-                    points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, "Partisan bias", score), Series = member.Party });
+                    points.Add(new Point { x = score, y = Stack(score, points), Id = member.Id, Series = member.Party, Label = GetTooltip(member, "Partisan bias", score) });
                 }
             }
 
@@ -345,7 +345,7 @@ namespace WhipStat.Controllers
                 var dps = new DataPointSet { c = new DataPoint[n] };
                 var i = series.FindIndex(p => p == point.Series);
                 dps.c[0] = new DataPoint { v = point.x.ToString() };
-                dps.c[i * 2 + 1] = new DataPoint { v = point.y.ToString() };
+                dps.c[i * 2 + 1] = new DataPoint { v = point.y.ToString(), p = new Dictionary<string, string> { { "id", point.Id.ToString() } } };
                 dps.c[i * 2 + 2] = new DataPoint { v = point.Label };
                 dt.rows.Add(dps);
             }
@@ -554,8 +554,100 @@ namespace WhipStat.Controllers
                     if (n > 0)
                     {
                         var score = tally.Average(i => 100.0 * i.Support / i.Votes * i.Favor / i.Count);   // Quick-n-dirty correlation!
-                        points.Add(new Point { x = score, y = Stack(score, points), Label = GetTooltip(member, "Correlation", score), Series = member.Party });
+                        points.Add(new Point { x = score, y = Stack(score, points), Id = member.Id, Series = member.Party, Label = GetTooltip(member, "Correlation", score) });
                     }
+                }
+            }
+
+            return ConvertMemberPoints(points);
+        }
+
+        public IActionResult Fidelity()
+        {
+            return View(new FidelityViewModel()
+            {
+                OddYears = GetYearList(2013, 2),
+                EvenYears = GetYearList(2014, 2),
+                Chambers = GetChamberList(),
+                From = 2013,
+                To = 2022
+            });
+        }
+
+        [HttpPost]
+        [DisableRequestSizeLimit]
+        public IActionResult Fidelity(FidelityViewModel model)
+        {
+            // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
+            // Do the time consuming work now, while loading indicator is displayed
+            var chamber = model.Chamber == "0" ? "Member" : model.Chamber;
+            HttpContext.Session.SetString(SessionKeyFileName, $"{chamber} Constituent Fidelity ({model.From}-{model.To}).tsv");
+            HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
+            HttpContext.Session.SetString(SessionKeyContents, RecordDb.GetFidelityLeaderboard(model.Chamber, model.From, model.To));
+
+            // Serve up the download page and deliver file
+            return View("Download");
+        }
+
+        [HttpGet]
+        public DataTable GetBallotMeasures(int member, short from, short to)
+        {
+            var dt = new DataTable
+            {
+                cols = new List<ColInfo> {
+                    new ColInfo { label = "Year", type = "string" },
+                    new ColInfo { label = "Measure", type = "string" },
+                    new ColInfo { label = "Bill", type = "number" },
+                    new ColInfo { label = "Description", type = "string" },
+                    new ColInfo { label = "Member", type = "number" },
+                    new ColInfo { label = "Voters", type = "number" },
+                    new ColInfo { label = "Match", type = "string" }
+                },
+                rows = new List<DataPointSet>(),
+                p = new Dictionary<string, string>()
+            };
+
+            var district = RecordDb.Members.First(i => i.Id == member).District;
+            var records = (from b in RecordDb.Measures where b.Year >= @from && b.Year <= @to && b.BillNumber.HasValue
+                           join d in RecordDb.DistrictResults on new { I = b.Id, D = district } equals new { I = d.MeasureId, D = d.District }
+                           join v in RecordDb.VotingRecords on new { Y = b.Biennium, N = b.BillNumber.Value, M = member } equals new { Y = v.Biennium, N = v.BillNumber, M = v.Id }
+                           select new { b.Year, b.Name, v.BillNumber, b.Description, MemberSupport = v.Support, VoterSupport = 100.0 * d.Support / (d.Support + d.Oppose) }).ToList();
+
+            foreach (var record in records)
+                dt.rows.Add(new DataPointSet
+                {
+                    c = new DataPoint[] {
+                        new DataPoint { v = record.Year.ToString() },
+                        new DataPoint { v = record.Name },
+                        new DataPoint { v = record.BillNumber.ToString() },
+                        new DataPoint { v = record.Description },
+                        new DataPoint { v = record.MemberSupport > 0 ? "Y" : "N" },
+                        new DataPoint { v = record.VoterSupport.ToString("N1") + "%" },
+                        new DataPoint { v = record.MemberSupport > 0 ^ record.VoterSupport > 50.0 ? "N" : "Y" } }
+                });
+
+            return dt;
+        }
+
+        [HttpGet]
+        public DataTable GetFidelityDataTable(string chamber, short from, short to)
+        {
+            var points = new List<Point>();
+            var members = RecordDb.Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.Party).ToList();
+            var records = (from b in RecordDb.Measures where b.Year >= @from && b.Year <= @to && b.BillNumber.HasValue
+                           join d in RecordDb.DistrictResults on b.Id equals d.MeasureId
+                           join m in RecordDb.Members on d.District equals m.District
+                           join v in RecordDb.VotingRecords on new { Y = b.Biennium, N = b.BillNumber.Value, M = m.Id } equals new { Y = v.Biennium, N = v.BillNumber, M = v.Id }
+                           select new { v.Id, MemberSupport = v.Support > 0, VoterSupport = d.Support > d.Oppose }).ToList();
+
+            foreach (var member in members)
+            {
+                var tally = records.Where(i => i.Id == member.Id);
+                double n = tally.Count();
+                if (n > 0)
+                {
+                    var score = tally.Count(i => !(i.MemberSupport ^ i.VoterSupport)) / n * 100;
+                    points.Add(new Point { x = score, y = Stack(score, points), Id = member.Id, Series = member.Party, Label = GetTooltip(member, "Fidelity", score) });
                 }
             }
 

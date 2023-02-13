@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -71,7 +70,7 @@ namespace WhipStat.DataAccess
 
                     sb.AppendFormat("{0:P2}\t", turnout ? (ballots / voters - percentturnout) : (matches / votes - percentvote));
                 }
-                sb.AppendLine(String.Format("{0:P2}", turnout ? percentturnout : percentvote));
+                sb.AppendLine(string.Format("{0:P2}", turnout ? percentturnout : percentvote));
             }
 
             return sb.ToString();

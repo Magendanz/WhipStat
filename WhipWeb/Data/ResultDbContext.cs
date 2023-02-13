@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -53,9 +52,9 @@ namespace WhipStat.Data
                     votes = ballots - result.Where(i => i.CounterType.EndsWith(" Voted")).Sum(i => i.Count);
                     voters = result.Single(i => i.CounterType == "Registered Voters").Count;
                 }
-                sb.AppendLine(String.Format("{0}\t{1:P2}\t{2:P2}", precinct.PrecinctName, matches / votes - percentvote, ballots / voters - percentturnout));
+                sb.AppendLine(string.Format("{0}\t{1:P2}\t{2:P2}", precinct.PrecinctName, matches / votes - percentvote, ballots / voters - percentturnout));
             }
-            sb.AppendLine(String.Format("Average:\t{0:P2}\t{1:P2}", percentvote, percentturnout));
+            sb.AppendLine(string.Format("Average:\t{0:P2}\t{1:P2}", percentvote, percentturnout));
 
             return sb.ToString();
         }

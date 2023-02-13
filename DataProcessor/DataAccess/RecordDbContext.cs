@@ -9,11 +9,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 using WhipStat.Helpers;
-using WhipStat.Models.PDC;
 using WhipStat.Models.LegTech;
 
 using System.Text;
-using System.Numerics;
 using System.Text.RegularExpressions;
 
 namespace WhipStat.DataAccess
@@ -32,6 +30,9 @@ namespace WhipStat.DataAccess
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<AdvocacyRecord> AdvocacyRecords { get; set; }
         public DbSet<VotingRecord> VotingRecords { get; set; }
+        public DbSet<Measure> Measures { get; set; }
+        public DbSet<DistrictResult> DistrictResults { get; set; }
+
 
         public readonly string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
             "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
@@ -52,6 +53,7 @@ namespace WhipStat.DataAccess
             modelBuilder.Entity<Score>().HasKey(t => new { t.MemberId, t.Year, t.PolicyArea });
             modelBuilder.Entity<AdvocacyRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
             modelBuilder.Entity<VotingRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
+            modelBuilder.Entity<DistrictResult>().HasKey(t => new { t.MeasureId, t.District });
         }
 
         public void GetMembers()
@@ -458,8 +460,7 @@ namespace WhipStat.DataAccess
                 var date = GetByNames(row, "MeetingDate", "StartTime", "TimeSignedIn");
                 if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var result))
                     record.MeetingDate = result;
-                var end = (record.MeetingDate.Year + 1) / 2 * 2;
-                record.Biennium = $"{end - 1:D4}-{end % 100:D2}";
+                record.Biennium = ToBiennium(record.MeetingDate.Year);
 
                 test.Add(record);
                 ReportProgress((double)++i / count);
@@ -469,7 +470,13 @@ namespace WhipStat.DataAccess
             Testimonies.AddRange(test);
             SaveChanges();
         }
-        
+
+        private static string ToBiennium(int year)
+        {
+            var end = ++year & -2;
+            return $"{end - 1:D4}-{end % 100:D2}";
+        }
+
         public void FixupTestimony(string path)
         {
             var lines = File.ReadAllLines(path, Encoding.Latin1);
@@ -603,7 +610,7 @@ namespace WhipStat.DataAccess
         {
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.VotingRecords");
             var members = Members.ToList();
-            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
+            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12" };
 
             Console.WriteLine($"Calculating voting records...");
             foreach (var biennium in biennia)
@@ -615,25 +622,27 @@ namespace WhipStat.DataAccess
 
                 var votes = (from v in Votes join r in RollCalls on v.RollCallId equals r.Id
                             where r.Biennium == biennium && r.Motion.Contains("Final Passage")
-                            select new { r.BillNumber, v.MemberId, v.MemberVote }).ToList();
+                            select new { r.Id, r.BillNumber, v.MemberId, v.MemberVote }).OrderBy(i => i.Id).ToList();
+
                 foreach (var bill in bills)
                 {
                     var sponsors = bill.Sponsors.Split(",");
                     foreach (var member in members)
                     {
-                        var tally = votes.Where(i => i.BillNumber == bill.BillNumber && i.MemberId == member.Id).ToList();
+                        var tally = votes.Where(i => i.BillNumber == bill.BillNumber && i.MemberId == member.Id 
+                                                && (i.MemberVote == "Y" || i.MemberVote == "N")).ToList();
                         if (tally.Count == 0)
                             continue;
-                        var score = tally.Sum(i => i.MemberVote == "Y" ? 1 : i.MemberVote == "N" ? -1 : 0);
                         var sponsor = Array.IndexOf(sponsors, member.Acronym) + 1;
+                        var last = tally.Last();
                         records.Add(new VotingRecord
-                        { 
-                            Id = member.Id, 
-                            BillNumber = bill.BillNumber, 
-                            Biennium = biennium, 
+                        {
+                            Id = member.Id,
+                            BillNumber = bill.BillNumber,
+                            Biennium = biennium,
                             Sponsor = (short)sponsor,
-                            Votes = (short)tally.Count, 
-                            Support = (short)score 
+                            Votes = (short)tally.Count,
+                            Support = (short)(last.MemberVote == "Y" ? 1 : -1)
                         });
                     }
                     ReportProgress((double)++i / count);
@@ -803,6 +812,55 @@ namespace WhipStat.DataAccess
                 foreach (var item in ranking)
                     Console.WriteLine($"  {item.Key} - {item.Value}");
             }
+        }
+
+        public void GetMeasures(string supportPath, string opposePath)
+        {
+            // Load the CSV file
+            Console.WriteLine("Loading ballot measure results by LD...");
+            var support = DataTable.New.ReadCsv(supportPath);
+            var oppose = DataTable.New.ReadCsv(opposePath);
+
+            Debug.Assert(support.NumRows == oppose.NumRows);
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.Measures");
+            Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.DistrictResults");
+            var mesaures = new HashSet<Measure>();
+            var results = new HashSet<DistrictResult>();
+
+            var supRows = support.Rows.ToList();
+            var oppRows = oppose.Rows.ToList();
+            for (int i = 0; i < supRows.Count; i++)
+            {
+                var billNumber = oppRows[i]["BillNumber"];
+                var year = short.Parse(oppRows[i]["Year"]);
+                var measure = new Measure()
+                {
+                    Id = i + 1,
+                    Year = year,
+                    Name = oppRows[i]["Name"],
+                    Description = oppRows[i]["Description"],
+                    BillNumber = string.IsNullOrWhiteSpace(billNumber) ? null : short.Parse(billNumber),
+                    Biennium = ToBiennium(year)
+                };
+                mesaures.Add(measure);
+
+                for (short d = 1; d < 50; d++)
+                {
+                    var result = new DistrictResult()
+                    {
+                        MeasureId = measure.Id,
+                        District = d,
+                        Support = int.Parse(supRows[i]["LD " + d]),
+                        Oppose = int.Parse(oppRows[i]["LD " + d])
+                    };
+                    results.Add(result);
+                }
+            }
+
+            Console.WriteLine("Saving changes...\n");
+            Measures.AddRange(mesaures);
+            DistrictResults.AddRange(results);
+            SaveChanges();
         }
 
         public void RenamePhotos(string path)

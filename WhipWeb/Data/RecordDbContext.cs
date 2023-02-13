@@ -24,7 +24,8 @@ namespace WhipStat.Data
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<AdvocacyRecord> AdvocacyRecords { get; set; }
         public DbSet<VotingRecord> VotingRecords { get; set; }
-
+        public DbSet<Measure> Measures { get; set; }
+        public DbSet<DistrictResult> DistrictResults { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -41,6 +42,7 @@ namespace WhipStat.Data
             modelBuilder.Entity<Score>().HasKey(t => new { t.MemberId, t.Year, t.PolicyArea });
             modelBuilder.Entity<AdvocacyRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
             modelBuilder.Entity<VotingRecord>().HasKey(t => new { t.Id, t.BillNumber, t.Biennium });
+            modelBuilder.Entity<DistrictResult>().HasKey(t => new { t.MeasureId, t.District });
         }
 
         public string GetPartisanLeaderboard(short area, string chamber, short begin, short end)
@@ -80,6 +82,33 @@ namespace WhipStat.Data
                     sb.AppendLine($"{member.LastName}\t{member.FirstName}\t{member.District}\t{member.Agency}\t{member.Party}\t{n}\t{score:N1}");
                 }
             }
+            return sb.ToString();
+        }
+
+        public string GetFidelityLeaderboard(string chamber, short begin, short end)
+        {
+            var sb = new StringBuilder();
+            var members = Members.Where(i => chamber == "0" || i.Agency == chamber).OrderBy(i => i.LastName).ToList();
+            var records = (from b in Measures
+                           where b.Year >= begin && b.Year <= end && b.BillNumber.HasValue
+                           join d in DistrictResults on b.Id equals d.MeasureId
+                           join m in Members on d.District equals m.District
+                           join v in VotingRecords on new { Y = b.Biennium, N = b.BillNumber.Value, M = m.Id } equals new { Y = v.Biennium, N = v.BillNumber, M = v.Id }
+                           select new { v.Id, MemberSupport = v.Support > 0, VoterSupport = d.Support > d.Oppose }).ToList();
+
+            sb.AppendLine("Last Name\tFirst Name\tDistrict\tChamber\tParty\tCount\tFidelity");
+            foreach (var member in members)
+            {
+                var tally = records.Where(i => i.Id == member.Id);
+                double n = tally.Count();
+                if (n > 0)
+                {
+                    var score = tally.Count(i => !(i.MemberSupport ^ i.VoterSupport)) / n * 100;
+                    sb.AppendLine($"{member.LastName}\t{member.FirstName}\t{member.District}\t{member.Agency}\t{member.Party}\t{n}\t{score:N1}");
+                }
+            }
+
+
             return sb.ToString();
         }
     }
