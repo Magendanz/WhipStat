@@ -27,7 +27,9 @@ CREATE TABLE Measures (
 	[Year] smallint NOT NULL,
 	[Name] nvarchar(50) NOT NULL,
 	[Description] nvarchar(200),
-	[BillNumber] smallint
+	[BillNumber] smallint,
+	[Biennium] nvarchar(15),
+	INDEX IX_Measures NONCLUSTERED (Biennium, BillNumber)
 )
 
 CREATE TABLE DistrictResults (
