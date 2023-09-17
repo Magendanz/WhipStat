@@ -34,7 +34,7 @@ namespace WhipStat.DataAccess
         public DbSet<DistrictResult> DistrictResults { get; set; }
 
 
-        public readonly string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
+        public readonly string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
             "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -447,10 +447,10 @@ namespace WhipStat.DataAccess
                 }
                 else if (!string.IsNullOrWhiteSpace(record.AbbrTitle))
                 {
-                    var matches = Regex.Match(record.AbbrTitle, @"^([HSBE]{1,4}B\s\d{4})\s(.+)$");
+                    var matches = Regex.Match(record.AbbrTitle, @"^([2HSEhse]{1,4}[Bb]\s\d{4})\s(.+)$");
                     if (matches.Success)
                     {
-                        record.BillId = matches.Groups[1].Value;
+                        record.BillId = matches.Groups[1].Value.ToUpperInvariant();
                         if (short.TryParse(record.BillId[^4..], out var num))
                             record.BillNumber = num;
                         record.AbbrTitle = matches.Groups[2].Value;
@@ -610,7 +610,7 @@ namespace WhipStat.DataAccess
         {
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.VotingRecords");
             var members = Members.ToList();
-            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12" };
+            string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12" };
 
             Console.WriteLine($"Calculating voting records...");
             foreach (var biennium in biennia)
@@ -657,7 +657,7 @@ namespace WhipStat.DataAccess
         {
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.AdvocacyRecords");
             var testimonies = Testimonies.ToList();
-            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
+            string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
 
             Console.WriteLine($"Calculating advocacy records...");
             foreach (var biennium in biennia)
@@ -782,7 +782,7 @@ namespace WhipStat.DataAccess
 
         public void BiparisanBillSponsorship()
         {
-            string[] biennia = { "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
+            string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
 
             foreach (var biennium in biennia)
             {

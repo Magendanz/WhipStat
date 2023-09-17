@@ -15,7 +15,6 @@ using WhipStat.Helpers;
 using WhipStat.Models.LegTech;
 using WhipStat.Models.Fundraising;
 using WhipStat.Models.ProjectViewModels;
-using System.Security.Cryptography;
 
 namespace WhipStat.Controllers
 {
@@ -240,7 +239,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(1992, 2),
                 Chambers = GetChamberList(),
                 From = 2013,
-                To = 2022
+                To = 2024
             });
         }
 
@@ -381,7 +380,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2008),
                 Jurisdictions = GetJurisdictionList(),
                 From = "2007",
-                To = "2022"
+                To = "2024"
             });
         }
 
@@ -467,7 +466,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2014, 2),
                 Chambers = GetChamberList(),
                 From = 2013,
-                To = 2022
+                To = 2024
             });
         }
 
@@ -570,7 +569,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2014, 2),
                 Chambers = GetChamberList(),
                 From = 2013,
-                To = 2022
+                To = 2024
             });
         }
 
