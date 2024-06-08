@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Threading;
-using System.Threading.Tasks;
 
 using WhipStat.Helpers;
 using WhipStat.Models.LWS;
@@ -88,7 +87,6 @@ namespace WhipStat.DataAccess
             var response = GetResponse(requestUri);
             var xmlSer = new DataContractSerializer(typeof(List<T>));
             var stream = response.Content.ReadAsStreamAsync().Result;
-            var str = response.Content.ReadAsStringAsync().Result;
             return xmlSer.ReadObject(stream) as List<T>;
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -863,6 +864,20 @@ namespace WhipStat.DataAccess
             SaveChanges();
         }
 
+        public void GetPhotos(string biennium)
+        {
+            Console.WriteLine($"Getting member photos for {biennium} biennium...");
+            var members = LwsAccess.GetMembers(biennium);
+
+            foreach (var member in members)
+            {
+                using (var client = new System.Net.WebClient())
+                {
+                    client.DownloadFile(new Uri($"https://app.leg.wa.gov/ContentParts/MemberPortraits/LargePhoto?m={member.Id}"), $"{member.Id}.jpg");
+                }
+            }
+        }
+
         public void RenamePhotos(string path)
         {
             Console.WriteLine($"Renaming member photos...");
@@ -877,6 +892,7 @@ namespace WhipStat.DataAccess
                     File.Move(file, Path.Combine(Path.GetDirectoryName(file), member.Id + ".jpg"));
             }
         }
+
         private static void ReportProgress(double complete)
         {
             const int padding = 8;
