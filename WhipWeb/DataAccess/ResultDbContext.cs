@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 using WhipStat.Models.Elections;
 
-namespace WhipStat.Data
+namespace WhipStat.DataAccess
 {
     public partial class ResultDbContext : DbContext
     {

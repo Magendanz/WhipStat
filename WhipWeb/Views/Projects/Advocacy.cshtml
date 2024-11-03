@@ -2,207 +2,208 @@
 <h2>Identify Friend or Foe</h2>
 
 <div class="row">
-    <div class="col-md-8">
-        <div id="Chart">
-            <div class="mx-auto" style="opacity:0.2; width: 40%; margin-top: 200px;">
-                <img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
+  <div class="col-md-8">
+    <div id="Chart">
+      <div class="mx-auto" style="opacity:0.2; width: 40%; margin-top: 200px;">
+        <img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
+      </div>
+    </div>
+    <div id="List">
+      <table class="table" id="Bills">
+      </table>
+      <h5 style="text-align:center;color:gray" id="Instructions">
+        Select an organization from the list to continue.
+      </h5>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <section>
+      <h3>Filters:</h3>
+      <form asp-controller="Projects" asp-action="Advocacy" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
+        <ul class="list-group">
+          <li class="list-group-item">
+            <h5 class="list-group-item-heading">Organization:</h5>
+            <input asp-for="Organization" class="form-control" placeholder="Type here to match known orgs" />
+          </li>
+          <li class="list-group-item">
+            <h5 class="list-group-item-heading">Chamber:</h5>
+            <select asp-for="Chamber" asp-items="Model.Chambers"></select>
+          </li>
+          <li class="list-group-item">
+            <h5 class="list-group-item-heading">Date Range:</h5>
+            <select asp-for="From" asp-items="Model.OddYears"></select> to
+            <select asp-for="To" asp-items="Model.EvenYears"></select>
+          </li>
+          <li class="list-group-item" id="Submit" style="display:none;">
+            <div class="list-group-item-text text-center">
+              <button class="btn btn-primary" type="submit" id="Download">
+                <img src="~/images/cloud-download.svg" width="16" height="16">Download
+              </button>
             </div>
-        </div>
-        <div id="List">
-            <table class="table" id="Bills">
-            </table>
-            <h5 style="text-align:center;color:gray" id="Instructions">
-                Select an organization from the list to continue.
-            </h5>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <section>
-            <h3>Filters:</h3>
-            <form asp-controller="Projects" asp-action="Advocacy" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <h5 class="list-group-item-heading">Organization:</h5>
-                        <input asp-for="Organization" class="form-control" placeholder="Type here to match known orgs" />
-                    </li>
-                    <li class="list-group-item">
-                        <h5 class="list-group-item-heading">Chamber:</h5>
-                        <select asp-for="Chamber" asp-items="Model.Chambers"></select>
-                    </li>
-                    <li class="list-group-item">
-                        <h5 class="list-group-item-heading">Date Range:</h5>
-                        <select asp-for="From" asp-items="Model.OddYears"></select> to
-                        <select asp-for="To" asp-items="Model.EvenYears"></select>
-                    </li>
-                    <li class="list-group-item" id="Submit" style="display:none;">
-                        <div class="list-group-item-text text-center">
-                            <button class="btn btn-primary" type="submit" id="Download">
-                                <img src="~/images/cloud-download.svg" width="16" height="16">Download
-                            </button>
-                        </div>
-                    </li>
-                    <li class="list-group-item" id="Loading" style="opacity:0.5;">
-                        <div class="list-group-item-text">
-                            <div class="progress mx-auto" style="width: 50%; height: 32px;">
-                                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%;">Loading...</div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </form>
-            <br>
-        </section>
-        <section>
-            <h3>Methodology:</h3>
-            <p>
-                An organization's support for a bill is calculated as the average position for all people signing in for committee hearings on that bill from that organization, with 'Pro' counting as 1, 'Con' as -1 and 'Other' as 0. (All positions are included, regardless of whether they actually testify.) Member support for a bill is calculated as the average roll call floor vote, counting 'Yea' as 1, 'Nay' as -1, and 'Absent or Excused' as 0.
-            </p>
-            <p>
-                A correlation coefficient is then calculated between the bill sequence for the organization and each member of the legislature.  Members who always take the organization's position will have 100% correlation and those who always take the opposing position will have -100% correlation.
-            </p>
-        </section>
-        <section>
-            <h3>Related Links</h3>
-            <p>
-                More information is available at the sites below:
-            </p>
-            <ul>
-                <li><a href="https://legtracker.voter-science.com/">Voter Science Bill Tracker</a></li>
-                <li><a href="http://wslwebservices.leg.wa.gov/">WA Legislative Web Services</a></li>
-            </ul>
-        </section>
-    </div>
+          </li>
+          <li class="list-group-item" id="Loading" style="opacity:0.5;">
+            <div class="list-group-item-text">
+              <div class="progress mx-auto" style="width: 50%; height: 32px;">
+                <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%;">Loading...</div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </form>
+      <br>
+    </section>
+    <section>
+      <h3>Methodology:</h3>
+      <p>
+        An organization's support for a bill is calculated as the average position for all people signing in for committee hearings on that bill from that organization, with 'Pro' counting as 1, 'Con' as -1 and 'Other' as 0. (All positions are included, regardless of whether they actually testify.) Member support for a bill is calculated as the average roll call floor vote, counting 'Yea' as 1, 'Nay' as -1, and 'Absent or Excused' as 0.
+      </p>
+      <p>
+        A correlation coefficient is then calculated between the bill sequence for the organization and each member of the legislature.  Members who always take the organization's position will have 100% correlation and those who always take the opposing position will have -100% correlation.
+      </p>
+    </section>
+    <section>
+      <h3>Related Links</h3>
+      <p>
+        More information is available at the sites below:
+      </p>
+      <ul>
+        <li><a href="https://voter-science.blog/2022/01/27/identifying-friend-or-foe/">VS Blog - Identifying Friend or Foe</a></li>
+        <li><a href="https://legtracker.voter-science.com/">Voter Science Bill Tracker</a></li>
+        <li><a href="http://wslwebservices.leg.wa.gov/">WA Legislative Web Services</a></li>
+      </ul>
+    </section>
+  </div>
 </div>
 
 
 @section Scripts {
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-        var loading = true;
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    var loading = true;
 
-        // Load the Visualization API and the corechart package.
-        google.charts.load('current', { 'packages': ['corechart'] });
+    // Load the Visualization API and the corechart package.
+    google.charts.load('current', { 'packages': ['corechart'] });
 
-        // Set a callback to run when the Google Visualization API is loaded.
-        google.charts.setOnLoadCallback(drawChart);
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.charts.setOnLoadCallback(drawChart);
 
-        // Callback that creates and populates a data table,
-        // instantiates the scatter chart, passes in the data and
-        // draws it.
-        function drawChart() {
+    // Callback that creates and populates a data table,
+    // instantiates the scatter chart, passes in the data and
+    // draws it.
+    function drawChart() {
 
-            $.get("/Projects/GetVotingRecordDataTable/?" + $('form').serialize(), function (data) {
-                // Create our data table out of JSON data loaded from server.
-                if (data.rows.length > 0) {
-                    var dt = new google.visualization.DataTable(data);
-                    // Get filter settings.
-                    var org = $("#Organization option:selected").text();
-                    var from = $("#From option:selected").text();
-                    var to = $("#To option:selected").text();
-                    var options = {
-                        title: org + " (" + from + "-" + to.slice(-2) + ")",
-                        height: 640,
-                        chartArea: { width: '80%', height: '80%' },
-                        legend: { position: 'bottom' },
-                        colors: ['#4285F4', '#DB4437'],
-                        dataOpacity: 0.8,
-                        pointSize: 10,
-                        animation: { duration: 1000, easing: 'out', startup: true },
-                        tooltip: { isHtml: true }
-                    }
+      $.get("/Projects/GetVotingRecordDataTable/?" + $('form').serialize(), function (data) {
+        // Create our data table out of JSON data loaded from server.
+        if (data.rows.length > 0) {
+          var dt = new google.visualization.DataTable(data);
+          // Get filter settings.
+          var org = $("#Organization option:selected").text();
+          var from = $("#From option:selected").text();
+          var to = $("#To option:selected").text();
+          var options = {
+            title: org + " (" + from + "-" + to.slice(-2) + ")",
+            height: 640,
+            chartArea: { width: '80%', height: '80%' },
+            legend: { position: 'bottom' },
+            colors: ['#4285F4', '#DB4437'],
+            dataOpacity: 0.8,
+            pointSize: 10,
+            animation: { duration: 1000, easing: 'out', startup: true },
+            tooltip: { isHtml: true }
+          }
 
-                    // Instantiate and draw our chart, passing in some options.
-                    var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
-                    google.visualization.events.addListener(chart, 'animationfinish', drawMedianValues);
-                    chart.draw(dt, options);
-                    $("#Instructions").hide();
-                    $("#Submit").show();
+          // Instantiate and draw our chart, passing in some options.
+          var chart = new google.visualization.ScatterChart(document.getElementById('Chart'));
+          google.visualization.events.addListener(chart, 'animationfinish', drawMedianValues);
+          chart.draw(dt, options);
+          $("#Instructions").hide();
+          $("#Submit").show();
 
-                    function drawMedianValues() {
-                        var cli = chart.getChartLayoutInterface();
-                        var area = cli.getChartAreaBoundingBox();
-                        var svg = chart.getContainer().getElementsByTagName('svg')[0];
-                        for (i = 0; i < 2; i++) {
-                            var p = dt.getColumnProperties(i * 2 + 1);
-                            var x = cli.getXLocation(p.median)
-                            svg.appendChild(createLine(x, area.top + area.height, x, area.top, options.colors[i], 0.3, 5));
-                        }
-                    }
-
-                    function createLine(x1, y1, x2, y2, color, opacity, width) {
-                        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                        line.setAttribute('x1', x1);
-                        line.setAttribute('y1', y1);
-                        line.setAttribute('x2', x2);
-                        line.setAttribute('y2', y2);
-                        line.setAttribute('stroke', color);
-                        line.setAttribute('stroke-opacity', opacity);
-                        line.setAttribute('stroke-width', width);
-                        return line;
-                    }
-                }
-                $("#Loading").hide();
-                loading = false;
-            });
-        }
-
-        function createTable() {
-            
-            $("#Bills").empty();
-            $.get("/Projects/GetBillRatings/?" + $('form').serialize(), function (data) {
-                var thead = $("<thead/>");
-                var tr = $("<tr>");
-                $.each(data.cols, function (key, col) {
-                    tr.append($("<th>").text(col.label));
-                });
-                thead.append(tr);
-                var tbody = $("<tbody/>");
-                $.each(data.rows, function (key, row) {
-                    var tr = $("<tr>");
-                    $.each(row.c, function (key, cell) {
-                        tr.append($("<td>").text(cell.v));
-                    });
-                    tbody.append(tr);
-                });
-                $("#Bills").append(thead, tbody);
-            });
-        }
-
-        function updatePage() {
-            if (!loading) {
-                $("#Submit").hide();
-                $("#Loading").show();
-                drawChart();
-                createTable();
+          function drawMedianValues() {
+            var cli = chart.getChartLayoutInterface();
+            var area = cli.getChartAreaBoundingBox();
+            var svg = chart.getContainer().getElementsByTagName('svg')[0];
+            for (i = 0; i < 2; i++) {
+              var p = dt.getColumnProperties(i * 2 + 1);
+              var x = cli.getXLocation(p.median)
+              svg.appendChild(createLine(x, area.top + area.height, x, area.top, options.colors[i], 0.3, 5));
             }
+          }
+
+          function createLine(x1, y1, x2, y2, color, opacity, width) {
+            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-opacity', opacity);
+            line.setAttribute('stroke-width', width);
+            return line;
+          }
         }
+        $("#Loading").hide();
+        loading = false;
+      });
+    }
 
-        $("select").change(updatePage);
+    function createTable() {
 
-        $("#Download").click(function () {
-            $("#Submit").hide();
-            $("#Loading").show();
-        }).change();
-
-        $.get("/Projects/GetOrganizations", function (data) {
-            $("#Organization").autocomplete({
-                source: data,
-                select: function(event, ui) {
-                    $(this).val(ui.item.value);
-                    $(this).select();
-                    updatePage();
-                }
-            });
+      $("#Bills").empty();
+      $.get("/Projects/GetBillRatings/?" + $('form').serialize(), function (data) {
+        var thead = $("<thead/>");
+        var tr = $("<tr>");
+        $.each(data.cols, function (key, col) {
+          tr.append($("<th>").text(col.label));
         });
-
-        $(document).ready(function() {
-            $(window).keydown(function(event) {
-                if (event.keyCode == 13) {
-                    event.preventDefault();
-                    return false;
-                }
-            });
+        thead.append(tr);
+        var tbody = $("<tbody/>");
+        $.each(data.rows, function (key, row) {
+          var tr = $("<tr>");
+          $.each(row.c, function (key, cell) {
+            tr.append($("<td>").text(cell.v));
+          });
+          tbody.append(tr);
         });
+        $("#Bills").append(thead, tbody);
+      });
+    }
 
-    </script>
+    function updatePage() {
+      if (!loading) {
+        $("#Submit").hide();
+        $("#Loading").show();
+        drawChart();
+        createTable();
+      }
+    }
+
+    $("select").change(updatePage);
+
+    $("#Download").click(function () {
+      $("#Submit").hide();
+      $("#Loading").show();
+    }).change();
+
+    $.get("/Projects/GetOrganizations", function (data) {
+      $("#Organization").autocomplete({
+        source: data,
+        select: function (event, ui) {
+          $(this).val(ui.item.value);
+          $(this).select();
+          updatePage();
+        }
+      });
+    });
+
+    $(document).ready(function () {
+      $(window).keydown(function (event) {
+        if (event.keyCode == 13) {
+          event.preventDefault();
+          return false;
+        }
+      });
+    });
+
+  </script>
 }

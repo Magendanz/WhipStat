@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using WhipStat.Models.LegTech;
 using Microsoft.Extensions.Configuration;
 
-namespace WhipStat.Data
+namespace WhipStat.DataAccess
 {
     public partial class RecordDbContext : DbContext
     {

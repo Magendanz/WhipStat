@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 using WhipStat.Models.VRDB;
 
-namespace WhipStat.Data
+namespace WhipStat.DataAccess
 {
     public partial class VoterDbContext : DbContext
     {

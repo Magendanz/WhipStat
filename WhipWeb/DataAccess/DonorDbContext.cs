@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 using WhipStat.Models.Fundraising;
 
-namespace WhipStat.Data
+namespace WhipStat.DataAccess
 {
     public partial class DonorDbContext : DbContext
     {
@@ -31,11 +31,11 @@ namespace WhipStat.Data
             modelBuilder.Entity<Tally>().HasKey(t => new { t.DonorId, t.Year, t.Jurisdiction });
         }
 
-        public string GetDonors(string party, string zips)
+        public string GetDonors(string party)
         {
             var sb = new StringBuilder();
 
-            var results = Donations.Where(d => d.Pty == party && zips.Contains(d.Zip))
+            var results = Donations.Where(d => d.Pty == party)
                 .OrderBy(d => d.Name).ToList();
 
             // TODO: This is a tab-delimited list rignt now, but we should switch to CSV output

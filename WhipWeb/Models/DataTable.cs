@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WhipStat.Data
+namespace WhipWeb.Models
 {
     // This the data used to initialize a DataTable object for Google Charts.  It will be serialized to JSON automatically.
     //

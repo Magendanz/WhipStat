@@ -10,11 +10,13 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
-using WhipStat.Data;
+using WhipStat.DataAccess;
 using WhipStat.Helpers;
 using WhipStat.Models.LegTech;
 using WhipStat.Models.Fundraising;
 using WhipStat.Models.ProjectViewModels;
+
+using WhipWeb.Models;
 
 namespace WhipStat.Controllers
 {
@@ -24,7 +26,6 @@ namespace WhipStat.Controllers
         const string SessionKeyContentType = "_ContentType";
         const string SessionKeyContents = "_Contents";
 
-        readonly VoterDbContext VoterDb = new VoterDbContext();
         readonly DonorDbContext DonorDb = new DonorDbContext();
         readonly ResultDbContext ResultDb = new ResultDbContext();
         readonly RecordDbContext RecordDb = new RecordDbContext();
@@ -58,16 +59,16 @@ namespace WhipStat.Controllers
         [DisableRequestSizeLimit]
         public IActionResult Voters(VotersViewModel model)
         {
-            var precincts = VoterDb.GetPrecincts(model.District);
+            var precincts = TrfAccess.GetPrecincts($"Legislative District {model.District}");
 
             // Note: We're implementing the POST-REDIRECT-GET (PRG) design pattern
             // Do the time consuming work now, while loading indicator is displayed
-            if (model.Precinct < Int32.MaxValue)
+            if (model.Precinct < int.MaxValue)
             {
                 // A single precinct list is served up directly
-                HttpContext.Session.SetString(SessionKeyFileName, $"{precincts[model.Precinct]}.tsv");
+                HttpContext.Session.SetString(SessionKeyFileName, $"LD {model.District} - {precincts[model.Precinct]}.csv");
                 HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
-                HttpContext.Session.SetString(SessionKeyContents, VoterDb.GetVoters(model.District, model.Precinct));
+                HttpContext.Session.SetString(SessionKeyContents, TrfAccess.GetVoters(model.District, model.Precinct, model.Inactive));
             }
             else
             {
@@ -79,7 +80,7 @@ namespace WhipStat.Controllers
                     {
                         var entry = zip.CreateEntry($"{item.Value}.tsv");
                         using var writer = new StreamWriter(entry.Open());
-                        writer.Write(VoterDb.GetVoters(model.District, item.Key));
+                        writer.Write(TrfAccess.GetVoters(model.District, item.Key));
                     }
                 }
 
@@ -98,7 +99,7 @@ namespace WhipStat.Controllers
             var list = new List<SelectListItem> { SelectPrompt };
 
             for (var i = 1; i < 50; ++i)
-                list.Add(new SelectListItem { Value = i.ToString(), Text = $"LD {i}" });
+                list.Add(new SelectListItem { Value = i.ToString(), Text = $"Legislative District {i}" });
 
             return list;
         }
@@ -106,13 +107,11 @@ namespace WhipStat.Controllers
         [HttpGet]
         public List<SelectListItem> GetPrecinctList(int district)
         {
-            var list = new List<SelectListItem> { SelectPrompt };
-
-            foreach (var item in VoterDb.GetPrecincts(district).OrderBy(p => p.Value))
-                list.Add(new SelectListItem { Value = item.Key.ToString(), Text = item.Value });
+            var precincts = TrfAccess.GetPrecincts($"Legislative District {district}");
+            var list = precincts.Select(i => new SelectListItem { Value = i.Key.ToString(), Text = i.Value }).OrderBy(j => j.Text).ToList();
 
             // Add one more special entry to allow all precincts to be download as a zip archive
-            list.Add(new SelectListItem { Value = Int32.MaxValue.ToString(), Text = "All Precincts" });
+            list.Add(new SelectListItem { Value = int.MaxValue.ToString(), Text = "All Precincts" });
 
             return list;
         }
@@ -131,7 +130,7 @@ namespace WhipStat.Controllers
             // Do the time consuming work now, while loading indicator is displayed
             HttpContext.Session.SetString(SessionKeyFileName, $"LD{model.District}-{model.Party}.tsv");
             HttpContext.Session.SetString(SessionKeyContentType, "text/tab-separated-values");
-            HttpContext.Session.SetString(SessionKeyContents, DonorDb.GetDonors(model.Party, GetZipCodes(model.District)));
+            HttpContext.Session.SetString(SessionKeyContents, DonorDb.GetDonors(model.Party));
 
             // Serve up the download page and deliver file
             return View("Download");
@@ -145,11 +144,6 @@ namespace WhipStat.Controllers
                 list.Add(new SelectListItem { Value = item.Code, Text = item.Name });
 
             return list;
-        }
-
-        private string GetZipCodes(int distict)
-        {
-            return VoterDb.ZipCodes.First(z => z.LegislativeDistrict == distict).ZipCodes;
         }
 
         public IActionResult Results()
@@ -455,8 +449,8 @@ namespace WhipStat.Controllers
         }
 
         private string GetTooltip(Models.LWS.Member member, string label, double score) => string.Format(MemberTooltipHtml, member.Id, member.Name, member.Agency, member.District, member.Party, label, score);
-        private string GetTooltip(Donor donor, double total, double bias, double winning) => String.Format(DonorTooltipHtml, donor.Name, total, bias, winning);
-        private string GetPointStyle(double value) => String.Format(DonorPointStyle, ColorUtilities.GetIndexedColorOnGradient(value + 0.5, "#4285F4", "#DB4437"));
+        private string GetTooltip(Donor donor, double total, double bias, double winning) => string.Format(DonorTooltipHtml, donor.Name, total, bias, winning);
+        private string GetPointStyle(double value) => string.Format(DonorPointStyle, ColorUtilities.GetIndexedColorOnGradient(value + 0.5, "#4285F4", "#DB4437"));
 
         public IActionResult Advocacy()
         {

@@ -400,13 +400,12 @@ namespace WhipStat.DataAccess
 
         public void ImportTestimony(string path)
         {
+            Console.Write($"Importing {Path.GetFileName(path)}...");
             var test = new List<Testimony>();
             var table = DataTable.New.ReadCsv(path);
             var agency = path.Contains("House", StringComparison.InvariantCultureIgnoreCase) ? "House"
                 : path.Contains("Senate", StringComparison.InvariantCultureIgnoreCase) ? "Senate" : null;
             int count = table.NumRows, i = 0;
-
-            Console.Write($"Importing {Path.GetFileName(path)}...");
             foreach (var row in table.Rows)
             {
                 for (int j = 0; j < row.Values.Count; j ++)
@@ -611,7 +610,7 @@ namespace WhipStat.DataAccess
         {
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.VotingRecords");
             var members = Members.ToList();
-            string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12" };
+            string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
 
             Console.WriteLine($"Calculating voting records...");
             foreach (var biennium in biennia)
@@ -630,12 +629,11 @@ namespace WhipStat.DataAccess
                     var sponsors = bill.Sponsors.Split(",");
                     foreach (var member in members)
                     {
-                        var tally = votes.Where(i => i.BillNumber == bill.BillNumber && i.MemberId == member.Id 
-                                                && (i.MemberVote == "Y" || i.MemberVote == "N")).ToList();
+                        var tally = votes.Where(i => i.BillNumber == bill.BillNumber && i.MemberId == member.Id).ToList();
                         if (tally.Count == 0)
                             continue;
+                        var support = tally.Sum(i => i.MemberVote == "Y" ? 1 : i.MemberVote == "N" ? -1 : 0);
                         var sponsor = Array.IndexOf(sponsors, member.Acronym) + 1;
-                        var last = tally.Last();
                         records.Add(new VotingRecord
                         {
                             Id = member.Id,
@@ -643,7 +641,7 @@ namespace WhipStat.DataAccess
                             Biennium = biennium,
                             Sponsor = (short)sponsor,
                             Votes = (short)tally.Count,
-                            Support = (short)(last.MemberVote == "Y" ? 1 : -1)
+                            Support = (short)support
                         });
                     }
                     ReportProgress((double)++i / count);
@@ -659,7 +657,7 @@ namespace WhipStat.DataAccess
             Database.ExecuteSqlRaw("TRUNCATE TABLE dbo.AdvocacyRecords");
             var testimonies = Testimonies.ToList();
             string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14" };
-
+            
             Console.WriteLine($"Calculating advocacy records...");
             foreach (var biennium in biennia)
             {

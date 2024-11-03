@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using WhipStat.Data;
 
 namespace WhipStat.Models.ProjectViewModels
 {

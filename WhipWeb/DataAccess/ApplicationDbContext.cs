@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace WhipWeb.Data
+namespace WhipWeb.DataAccess
 {
     public class ApplicationDbContext : IdentityDbContext
     {

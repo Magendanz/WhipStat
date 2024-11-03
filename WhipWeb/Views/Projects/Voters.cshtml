@@ -2,79 +2,88 @@
 <h2>Voter Registration</h2>
 
 <div class="row">
-    <div class="col-md-8">
-        <form asp-controller="Projects" asp-action="Voters" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
-            <h3>WA Secretary of State's Voter Registration Database (VRDB)</h3>
-            <ol class="list-group">
-                <li class="list-group-item" id="Item1">
-                    <h5 class="list-group-item-heading">
-                        Select Legislative District:
-                        <select asp-for="District" asp-items="Model.Districts"></select>
-                    </h5>
-                    <p class="list-group-item-text">Pick your legislative district from the dropdown list above.  Once you've selected one, the precincts for that district will be populated in a list below.</p>
-                </li>
-                <li class="list-group-item" id="Item2" style="display:none;">
-                    <h5 class="list-group-item-heading">
-                        Select Precinct:
-                        <select asp-for="Precinct"></select>
-                    </h5>
-                    <p class="list-group-item-text">Pick your precinct from the dropdown list above.  Once you've selected one, you'll be able to save the list of registered voters as a text file.</p>
-                </li>
-                <li class="list-group-item" id="Submit" style="display:none;">
-                    <div class="list-group-item-text text-center">
-                        <button class="btn btn-primary" type="submit" id="Download">
-                            <img src="~/images/cloud-download.svg" width="16" height="16"> Download
-                        </button>
-                    </div>
-                </li>
-                <li class="list-group-item" id="Loading" style="opacity:0.5; display:none;">
-                    <div class="list-group-item-text">
-                        <div class="progress mx-auto" style="width: 25%; height: 32px;">
-                            <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%;">Loading...</div>
-                        </div>
-                    </div>
-                </li>
-            </ol>
-        </form>
-    </div>
-    <div class="col-md-4">
-        <section>
-            <h3>Related Links</h3>
-            <p>
-                More information is available at the sites below:
-            </p>
-            <ul>
-                <li><a href="http://www.sos.wa.gov/elections/vrdb/">Voter Registration Database</a></li>
-                <li><a href="http://app.leg.wa.gov/DistrictFinder/">District Finder</a></li>
-                <li><a href="https://www.sos.wa.gov/elections/redistricting/maps.aspx">District Maps</a></li>
-            </ul>
-        </section>
-    </div>
+  <div class="col-md-8">
+    <form asp-controller="Projects" asp-action="Voters" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
+      <h3>WA Secretary of State's Voter Registration Database (VRDB)</h3>
+      <ol class="list-group">
+        <li class="list-group-item" id="Item1">
+          <h5 class="list-group-item-heading">
+            Select Legislative District:
+            <select asp-for="District" asp-items="Model.Districts"></select>
+          </h5>
+          <p class="list-group-item-text">Pick your legislative district from the dropdown list above.  Once you've selected one, the precincts for that district will be populated in a list below.</p>
+        </li>
+        <li class="list-group-item" id="Item2" style="display:none;">
+          <h5 class="list-group-item-heading">
+            Select Precinct:
+            <select asp-for="Precinct"></select>
+          </h5>
+          <p class="list-group-item-text">Pick your precinct from the dropdown list above.  Once you've selected one, you'll be able to save the list of registered voters as a CSV file.</p>
+        </li>
+        <li class="list-group-item" id="Item3" style="display:none;">
+          <h5>Options:</h5>
+          <input class="form-check-input" type="checkbox" asp-for="Inactive" />
+          <label class="form-check-label" for="Inactive">
+            Include inactive entries
+          </label>
+        </li>
+        <li class="list-group-item" id="Submit" style="display:none;">
+          <div class="list-group-item-text text-center">
+            <button class="btn btn-primary" type="submit" id="Download">
+              <img src="~/images/cloud-download.svg" width="16" height="16"> Download
+            </button>
+          </div>
+        </li>
+        <li class="list-group-item" id="Loading" style="opacity:0.5; display:none;">
+          <div class="list-group-item-text">
+            <div class="progress mx-auto" style="width: 25%; height: 32px;">
+              <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%;">Loading...</div>
+            </div>
+          </div>
+        </li>
+      </ol>
+    </form>
+  </div>
+  <div class="col-md-4">
+    <section>
+      <h3>Related Links</h3>
+      <p>
+        More information is available at the sites below:
+      </p>
+      <ul>
+        <li><a href="http://www.sos.wa.gov/elections/vrdb/">Voter Registration Database</a></li>
+        <li><a href="http://app.leg.wa.gov/DistrictFinder/">District Finder</a></li>
+        <li><a href="https://www.sos.wa.gov/elections/redistricting/maps.aspx">District Maps</a></li>
+      </ul>
+    </section>
+  </div>
 </div>
 
 
 @section Scripts {
-    <script>
-        $("#District").change(function () {
-            if (isSelected(this.value)) {
-                $("#Item2").hide();
-                $("#Submit").hide();
-                $("#Loading").show();
-                $.get("/Projects/GetPrecinctList/?" + $('form').serialize(), function (data) {
-                    $("#Precinct").setOptions(data);
-                    $("#Loading").hide();
-                    $("#Item2").show();
-                })
-            }
-        }).change();
-        $("#Precinct").change(function () {
-            if (isSelected(this.value)) {
-                $("#Submit").show();
-            }
-        }).change();
-        $("#Download").click(function () {
-            $("#Submit").hide();
-            $("#Loading").show();
-        }).change();
-    </script>
+  <script>
+    $("#District").change(function () {
+      if (isSelected(this.value)) {
+        $("#Item2").hide();
+        $("#Item3").hide();
+        $("#Submit").hide();
+        $("#Loading").show();
+        $.get("/Projects/GetPrecinctList/?" + $('form').serialize(), function (data) {
+          $("#Precinct").setOptions(data);
+          $("#Loading").hide();
+          $("#Item2").show();
+        })
+      }
+    }).change();
+    $("#Precinct").change(function () {
+      if (isSelected(this.value)) {
+        $("#Item3").show();
+        $("#Submit").show();
+      }
+    }).change();
+    $("#Download").click(function () {
+      $("#Submit").hide();
+      $("#Loading").show();
+    }).change();
+  </script>
 }
