@@ -17,6 +17,7 @@ using WhipStat.Models.Fundraising;
 using WhipStat.Models.ProjectViewModels;
 
 using WhipWeb.Models;
+using System.Security.Cryptography.Xml;
 
 namespace WhipStat.Controllers
 {
@@ -44,6 +45,59 @@ namespace WhipStat.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        public IActionResult Search()
+        {
+            return View(new VotersViewModel()
+            {
+                
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [DisableRequestSizeLimit]
+        public IActionResult Search(VotersViewModel model)
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public DataTable SearchVoters(string last, string first, string city, bool inactive)
+        {
+            var dt = new DataTable
+            {
+                cols = new List<ColInfo> {
+                    new ColInfo { label = "StateVoterId", type = "string" },
+                    new ColInfo { label = "Name", type = "string" },
+                    new ColInfo { label = "Gender", type = "string" },
+                    new ColInfo { label = "Birthdate", type = "date" },
+                    new ColInfo { label = "Address", type = "string" },
+                    new ColInfo { label = "Registered", type = "date" },
+                    new ColInfo { label = "LastVoted", type = "date" },
+                    new ColInfo { label = "Status", type = "string" },
+                },
+                rows = new List<DataPointSet>(),
+                p = new Dictionary<string, string>()
+            };
+
+            var voters = TrfAccess.GetVoters(last, first, city, inactive);
+            foreach (var voter in voters)
+                dt.rows.Add(new DataPointSet
+                {
+                    c = [
+                    new DataPoint { v = $"{voter.Id}\n({voter.Build})" },
+                    new DataPoint { v = $"{voter.LName}, {voter.FName} {voter.MName}" },
+                    new DataPoint { v = voter.Gender },
+                    new DataPoint { v = voter.Birthdate.HasValue ? $"{voter.Birthdate:d}" : $"{voter.Birthyear}" },
+                    new DataPoint { v = $"{voter.Address}\n{voter.City}, {voter.State} {voter.ZipCode}" },
+                    new DataPoint { v = $"{voter.Registered:d}" },
+                    new DataPoint { v = $"{voter.LastVoted:d}" },
+                    new DataPoint { v = voter.StatusCode } ]
+                });
+
+            return dt;
         }
 
         public IActionResult Voters()

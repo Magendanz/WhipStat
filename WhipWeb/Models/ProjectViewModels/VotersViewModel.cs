@@ -17,6 +17,12 @@ namespace WhipStat.Models.ProjectViewModels
         public int Precinct { get; set; }
         public List<SelectListItem> Districts { get; set; }
         public List<SelectListItem> Precincts { get; set; }
+
+		[Required]
+        public string Last { get; set; }
+        public string First { get; set; }
+        public string City { get; set; }
+
         public bool Inactive { get; set; }
     }
 }

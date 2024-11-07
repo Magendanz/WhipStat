@@ -1,0 +1,119 @@
+@model WhipStat.Models.ProjectViewModels.VotersViewModel
+<h2>Search Voter Rolls</h2>
+
+<div class="row">
+	<div class="col-md-9">
+
+		<div id="List">
+			<table class="table" id="Results">
+			</table>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<section>
+			<h3>Filters:</h3>
+			<form asp-controller="Projects" asp-action="Search" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal">
+				<ul class="list-group">
+					<li class="list-group-item" id="Fields">
+						<div class="field">
+							<label for="Last" class="form-label">Last Name:</label>
+							<input asp-for="Last" class="form-control">
+						</div>
+
+						<label for="First" class="form-label">First Name:</label>
+						<input asp-for="First" class="form-control">
+
+						<label for="City" class="form-label">City:</label>
+						<input asp-for="City" class="form-control">
+
+					</li>
+					<li class="list-group-item" id="Options">
+						<h5>Options:</h5>
+						<input class="form-check-input" type="checkbox" asp-for="Inactive" />
+						<label class="form-check-label" for="Inactive">
+							Include inactive entries
+						</label>
+					</li>
+					<li class="list-group-item" id="Submit">
+						<div class="d-grid col-6 mx-auto actions">
+							<button class="btn btn-primary" type="submit" id="Search" disabled>
+								Search
+							</button>
+						</div>
+					</li>
+					<li class="list-group-item" id="Loading" style="opacity:0.5;display:none;">
+						<div class="list-group-item-text">
+							<div class="progress mx-auto" style="width: 50%; height: 38px;">
+								<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%;">Loading...</div>
+							</div>
+						</div>
+					</li>
+				</ul>
+			</form>
+			<br>
+		</section>
+		<section>
+			<h3>Related Links</h3>
+			<p>
+				More information is available at the sites below:
+			</p>
+			<ul>
+				<li><a href="http://www.sos.wa.gov/elections/vrdb/">Voter Registration Database</a></li>
+				<li><a href="http://app.leg.wa.gov/DistrictFinder/">District Finder</a></li>
+				<li><a href="https://www.sos.wa.gov/elections/redistricting/maps.aspx">District Maps</a></li>
+			</ul>
+		</section>
+	</div>
+</div>
+
+
+@section Scripts {
+	<script type="text/javascript">
+
+		function createTable() {
+
+			$("#Results").empty();
+			$.get("/Projects/SearchVoters/?" + $('form').serialize(), function (data) {
+				var thead = $("<thead/>");
+				var tr = $("<tr>");
+				$.each(data.cols, function (key, col) {
+					tr.append($("<th>").text(col.label));
+				});
+				thead.append(tr);
+				var tbody = $("<tbody/>");
+				$.each(data.rows, function (key, row) {
+					var tr = $("<tr>");
+					$.each(row.c, function (key, cell) {
+						tr.append($("<td>").text(cell.v));
+					});
+					tbody.append(tr);
+				});
+				$("#Results").append(thead, tbody);
+				$("#Loading").hide();
+				$("#Submit").show();
+			});
+		}
+
+		$(document).ready(function () {
+			$('.field input').on('keyup', function () {
+				let empty = false;
+				$('.field input').each(function () {
+					empty = $(this).val().length == 0;
+				});
+				$('.actions button').attr('disabled', empty);
+			});
+
+			$("button").click(function (event) {
+				// Prevent the default form submission behavior
+				event.preventDefault();
+
+				// Your code to handle the button click goes here
+				$("#Submit").hide();
+				$("#Loading").show();
+				createTable();
+			});
+		});
+
+		//# sourceURL=Search.js
+	</script>
+}
