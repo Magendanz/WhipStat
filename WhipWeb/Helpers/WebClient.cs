@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -18,8 +19,8 @@ namespace WhipStat.Helpers
             NumberHandling = JsonNumberHandling.AllowReadingFromString
         };
 
-        public static async Task<T> SendAsync<T>(HttpMethod method, Uri url, string authorization = null, object body = null)
-        {
+        public static async Task<T> SendAsync<T>(HttpMethod method, Uri url, string authorization = null, object body = null) where T : new()
+		{
             var request = new HttpRequestMessage(method, url);
             request.Headers.Add("Accept", "application/json");
             if (authorization != null)
@@ -36,6 +37,9 @@ namespace WhipStat.Helpers
             }
 
             var response = await client.SendAsync(request, CancellationToken.None);
+
+            if (response.StatusCode == HttpStatusCode.NoContent)
+                return new T();
 
             if (typeof(T) == typeof(HttpResponseMessage))
                 return (T)(object)response;

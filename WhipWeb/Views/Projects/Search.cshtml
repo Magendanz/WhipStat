@@ -3,10 +3,17 @@
 
 <div class="row">
 	<div class="col-md-9">
-
+		<div id="Watermark">
+			<div class="mx-auto" style="opacity:0.2; width: 40%; margin-top: 200px;">
+				<img src="~/images/logo.svg" alt="WhipStat" class="img-responsive" />
+			</div>
+		</div>
 		<div id="List">
 			<table class="table" id="Results">
 			</table>
+			<h5 style="text-align:center;color:gray" id="Instructions">
+				Enter your search criteria on the right.
+			</h5>
 		</div>
 	</div>
 	<div class="col-md-3">
@@ -71,7 +78,8 @@
 	<script type="text/javascript">
 
 		function createTable() {
-
+			$("#Watermark").hide();
+			$("#Instructions").hide();
 			$("#Results").empty();
 			$.get("/Projects/SearchVoters/?" + $('form').serialize(), function (data) {
 				var thead = $("<thead/>");

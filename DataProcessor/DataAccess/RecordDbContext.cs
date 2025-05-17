@@ -35,8 +35,8 @@ namespace WhipStat.DataAccess
         public DbSet<DistrictResult> DistrictResults { get; set; }
 
 
-        public readonly string[] biennia = { "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", "2009-10",
-            "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
+        public readonly string[] biennia = { "2025-26", "2023-24", "2021-22", "2019-20", "2017-18", "2015-16", "2013-14", "2011-12", 
+            "2009-10", "2007-08", "2005-06", "2003-04", "2001-02", "1999-00", "1997-98", "1995-96", "1993-94", "1991-92" };
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

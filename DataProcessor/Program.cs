@@ -27,7 +27,7 @@ namespace DataProcessor
                 //db.ScoreAdvocacyRecords();
                 //db.ScoreVotingRecords();
                 //db.GetMeasures("Ballot Measures by LD (Support).csv", "Ballot Measures by LD (Oppose).csv");
-                //db.GetPhotos("2023-24");
+                //db.GetPhotos("2025-26");
                 //db.RenamePhotos(@"D:\Pictures\Legislature\Thumbnails\2019\Senate");
             }
 

@@ -287,7 +287,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(1992, 2),
                 Chambers = GetChamberList(),
                 From = 2013,
-                To = 2024
+                To = 2026
             });
         }
 
@@ -428,7 +428,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2008),
                 Jurisdictions = GetJurisdictionList(),
                 From = "2007",
-                To = "2024"
+                To = "2026"
             });
         }
 
@@ -514,7 +514,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2014, 2),
                 Chambers = GetChamberList(),
                 From = 2013,
-                To = 2024
+                To = 2026
             });
         }
 
@@ -617,7 +617,7 @@ namespace WhipStat.Controllers
                 EvenYears = GetYearList(2014, 2),
                 Chambers = GetChamberList(),
                 From = 2013,
-                To = 2024
+                To = 2026
             });
         }
 
